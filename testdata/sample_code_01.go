@@ -3,14 +3,14 @@ package sqlconst
 func main() {
 	const sql = `
 		SELECT
-			user_uuid
-		FROM users
-	`
+			user_uuid       ,
+			  user_name
+	, user_age FROM users`
 
 	const sql2 = "SELECT user_uuid FROM users2"
 
 	const sql3, sql4 = `
-		SELECT 
+		SELECT
 			user_uuid
 		FROM users3
 	`, `
