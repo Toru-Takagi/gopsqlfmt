@@ -107,18 +107,38 @@ WHERE user_uuid = $1
 		{
 			name: "simple insert",
 			sql: `
-				insert into users (user_uuid, user_name, user_age) values ($1, $2, $3)
+				insert into users (user_uuid, user_name, user_age, created_at) values ($1, $2, $3, now())
 			`,
 			want: `
 INSERT INTO users(
 	user_uuid,
 	user_name,
-	user_age
+	user_age,
+	created_at
 ) VALUES (
 	$1,
 	$2,
-	$3
+	$3,
+	NOW()
 )
+`,
+		},
+		{
+			name: "insert from select",
+			sql: `
+				insert into deleted_users (user_uuid, user_name, user_age) select user_uuid, user_name, user_age from users where user_uuid = $1
+			`,
+			want: `
+INSERT INTO deleted_users(
+	user_uuid,
+	user_name,
+	user_age
+) SELECT
+	user_uuid,
+	user_name,
+	user_age
+FROM users
+WHERE user_uuid = $1
 `,
 		},
 	}
