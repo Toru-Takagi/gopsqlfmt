@@ -104,6 +104,23 @@ WHERE user_uuid = $1
 	)
 `,
 		},
+		{
+			name: "simple insert",
+			sql: `
+				insert into users (user_uuid, user_name, user_age) values ($1, $2, $3)
+			`,
+			want: `
+INSERT INTO users(
+	user_uuid,
+	user_name,
+	user_age
+) VALUES (
+	$1,
+	$2,
+	$3
+)
+`,
+		},
 	}
 
 	for _, tt := range tests {

@@ -66,6 +66,55 @@ func Format(sql string) (string, error) {
 				strBuilder.WriteString(" ")
 				strBuilder.WriteString(res)
 			}
+		case *pg_query.Node_InsertStmt:
+			strBuilder.WriteString("\n")
+			strBuilder.WriteString("INSERT INTO")
+
+			// output table name
+			if internal.InsertStmt.Relation != nil {
+				strBuilder.WriteString(" ")
+				strBuilder.WriteString(internal.InsertStmt.Relation.Relname)
+				strBuilder.WriteString("(")
+			}
+
+			// output column name
+			for i, col := range internal.InsertStmt.Cols {
+				if target, ok := col.Node.(*pg_query.Node_ResTarget); ok {
+					if i != 0 {
+						strBuilder.WriteString(",")
+					}
+					strBuilder.WriteString("\n")
+					strBuilder.WriteString("\t")
+					strBuilder.WriteString(target.ResTarget.Name)
+				}
+			}
+
+			strBuilder.WriteString("\n")
+			strBuilder.WriteString(") VALUES (")
+
+			// output parameter
+			if internal.InsertStmt.SelectStmt != nil {
+				if sNode, ok := internal.InsertStmt.SelectStmt.Node.(*pg_query.Node_SelectStmt); ok {
+					for _, value := range sNode.SelectStmt.ValuesLists {
+						if list, ok := value.Node.(*pg_query.Node_List); ok {
+							for itemI, item := range list.List.Items {
+								if pRef, ok := item.Node.(*pg_query.Node_ParamRef); ok {
+									if itemI != 0 {
+										strBuilder.WriteString(",")
+									}
+									strBuilder.WriteString("\n")
+									strBuilder.WriteString("\t")
+									strBuilder.WriteString("$")
+									strBuilder.WriteString(fmt.Sprint(pRef.ParamRef.Number))
+								}
+							}
+						}
+					}
+				}
+			}
+
+			strBuilder.WriteString("\n")
+			strBuilder.WriteString(")")
 		}
 	}
 	strBuilder.WriteString("\n")
