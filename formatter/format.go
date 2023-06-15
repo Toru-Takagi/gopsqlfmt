@@ -9,10 +9,20 @@ import (
 	pg_query "github.com/pganalyze/pg_query_go/v4"
 )
 
+const (
+	namedParamPrefix = ":"
+	npMarkPrefix     = "ttpre_"
+)
+
 func Format(sql string) (string, error) {
 	ctx := context.Background()
 
-	result, err := pg_query.Parse(sql)
+	// support named parameter
+	replacedSQL := strings.NewReplacer([]string{
+		namedParamPrefix, npMarkPrefix,
+	}...).Replace(sql)
+
+	result, err := pg_query.Parse(replacedSQL)
 	if err != nil {
 		return "", err
 	}
@@ -95,7 +105,9 @@ func Format(sql string) (string, error) {
 		}
 	}
 	strBuilder.WriteString("\n")
-	return strBuilder.String(), nil
+	return strings.NewReplacer([]string{
+		npMarkPrefix, namedParamPrefix,
+	}...).Replace(strBuilder.String()), nil
 }
 
 func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt) (string, error) {

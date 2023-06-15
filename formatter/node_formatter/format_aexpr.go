@@ -29,10 +29,20 @@ func FormatAExpr(ctx context.Context, aeXpr *pg_query.Node_AExpr) (string, error
 		}
 	}
 
-	// output parameter
+	// output parameter (if $1)
 	if pRef, ok := aeXpr.AExpr.Rexpr.Node.(*pg_query.Node_ParamRef); ok {
 		bu.WriteString(" $")
 		bu.WriteString(fmt.Sprint(pRef.ParamRef.Number))
+	}
+
+	// output parameter (if named parameter)
+	if nRef, ok := aeXpr.AExpr.Rexpr.Node.(*pg_query.Node_ColumnRef); ok {
+		for _, f := range nRef.ColumnRef.Fields {
+			if s, ok := f.Node.(*pg_query.Node_String_); ok {
+				bu.WriteString(" ")
+				bu.WriteString(s.String_.Sval)
+			}
+		}
 	}
 
 	return bu.String(), nil

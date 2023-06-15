@@ -105,6 +105,20 @@ WHERE user_uuid = $1
 `,
 		},
 		{
+			name: "select with named parameter",
+			sql: `
+				select user_uuid, user_name from users where user_uuid = :user_uuid and user_email = :user_email
+			`,
+			want: `
+SELECT
+	user_uuid,
+	user_name
+FROM users
+WHERE user_uuid = :user_uuid
+	AND user_email = :user_email
+`,
+		},
+		{
 			name: "simple insert",
 			sql: `
 				insert into users (user_uuid, user_name, user_age, created_at) values ($1, $2, $3, now())
