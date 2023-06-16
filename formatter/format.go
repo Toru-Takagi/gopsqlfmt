@@ -122,12 +122,16 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt) (stri
 	for ti, node := range stmt.SelectStmt.TargetList {
 		if res, ok := node.Node.(*pg_query.Node_ResTarget); ok {
 			if n, ok := res.ResTarget.Val.Node.(*pg_query.Node_ColumnRef); ok {
-				for _, f := range n.ColumnRef.Fields {
+				for fi, f := range n.ColumnRef.Fields {
 					if s, ok := f.Node.(*pg_query.Node_String_); ok {
-						if ti != 0 {
-							bu.WriteString(",")
+						if fi == 0 {
+							if ti != 0 {
+								bu.WriteString(",")
+							}
+							bu.WriteString("\n\t")
+						} else {
+							bu.WriteString(".")
 						}
-						bu.WriteString("\n\t")
 						bu.WriteString(s.String_.Sval)
 					}
 				}
@@ -142,6 +146,10 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt) (stri
 			bu.WriteString("FROM")
 			bu.WriteString(" ")
 			bu.WriteString(res.RangeVar.Relname)
+			if res.RangeVar.Alias != nil {
+				bu.WriteString(" ")
+				bu.WriteString(res.RangeVar.Alias.Aliasname)
+			}
 		}
 	}
 

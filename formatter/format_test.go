@@ -119,6 +119,16 @@ WHERE user_uuid = :user_uuid
 `,
 		},
 		{
+			name: "select with alias table",
+			sql:  `select u.user_uuid, u.user_name from users u`,
+			want: `
+SELECT
+	u.user_uuid,
+	u.user_name
+FROM users u
+`,
+		},
+		{
 			name: "simple insert",
 			sql: `
 				insert into users (user_uuid, user_name, user_age, created_at) values ($1, $2, $3, now())
