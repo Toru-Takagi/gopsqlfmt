@@ -51,6 +51,15 @@ FROM users u
 `,
 		},
 		{
+			name: "alias with as",
+			sql:  "select u.user_name as un from users as u",
+			want: `
+SELECT
+	u.user_name un
+FROM users u
+`,
+		},
+		{
 			name: "select sql with where",
 			sql: `
 				SELECT
@@ -147,6 +156,16 @@ SELECT
 FROM users u
 INNER JOIN user_last_login ull ON u.user_uuid = ull.user_uuid
 WHERE u.user_uuid = $1
+`,
+		},
+		{
+			name: "window function of count",
+			sql:  `select COUNT(*) OVER () AS total, user_uuid from users`,
+			want: `
+SELECT
+	COUNT(*) OVER() total,
+	user_uuid
+FROM users
 `,
 		},
 		{

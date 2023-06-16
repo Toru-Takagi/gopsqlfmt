@@ -136,6 +136,19 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt) (stri
 					}
 				}
 			}
+			if funcCall, ok := res.ResTarget.Val.Node.(*pg_query.Node_FuncCall); ok {
+				bu.WriteString("\n\t")
+				for _, name := range funcCall.FuncCall.Funcname {
+					if s, ok := name.Node.(*pg_query.Node_String_); ok {
+						if s.String_.Sval == "count" {
+							bu.WriteString("COUNT(*)")
+						}
+					}
+				}
+				if funcCall.FuncCall.Over != nil {
+					bu.WriteString(" OVER()")
+				}
+			}
 			if res.ResTarget.Name != "" {
 				bu.WriteString(" ")
 				bu.WriteString(res.ResTarget.Name)
@@ -166,11 +179,11 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt) (stri
 				case pg_query.JoinType_JOIN_INNER:
 					bu.WriteString("\nINNER JOIN ")
 				}
-				bu.WriteString(nRangeVar.RangeVar.Relname)
-				if nRangeVar.RangeVar.Alias != nil {
-					bu.WriteString(" ")
-					bu.WriteString(nRangeVar.RangeVar.Alias.Aliasname)
+				tableName, err := nodeformatter.FormatTableName(ctx, nRangeVar)
+				if err != nil {
+					return "", err
 				}
+				bu.WriteString(tableName)
 				bu.WriteString(" ON ")
 			}
 

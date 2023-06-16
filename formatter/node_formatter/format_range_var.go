@@ -8,7 +8,15 @@ import (
 )
 
 func FormatFromAndTable(ctx context.Context, n *pg_query.Node_RangeVar) (string, error) {
-	table := fmt.Sprintf("\nFROM %s", n.RangeVar.Relname)
+	tableName, err := FormatTableName(ctx, n)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("\nFROM %s", tableName), nil
+}
+
+func FormatTableName(ctx context.Context, n *pg_query.Node_RangeVar) (string, error) {
+	table := n.RangeVar.Relname
 	if n.RangeVar.Alias != nil {
 		return fmt.Sprintf("%s %s", table, n.RangeVar.Alias.Aliasname), nil
 	}
