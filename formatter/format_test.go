@@ -42,6 +42,15 @@ FROM users
 `,
 		},
 		{
+			name: "column name alias",
+			sql:  "select u.user_name un from users u",
+			want: `
+SELECT
+	u.user_name un
+FROM users u
+`,
+		},
+		{
 			name: "select sql with where",
 			sql: `
 				SELECT
