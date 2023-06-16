@@ -129,6 +129,18 @@ FROM users u
 `,
 		},
 		{
+			name: "select with inner join",
+			sql:  `select u.user_name, ull.last_login_at from users u inner join user_last_login ull on u.user_uuid = ull.user_uuid where u.user_uuid = $1`,
+			want: `
+SELECT
+	u.user_name,
+	ull.last_login_at
+FROM users u
+INNER JOIN user_last_login ull ON u.user_uuid = ull.user_uuid
+WHERE u.user_uuid = $1
+`,
+		},
+		{
 			name: "simple insert",
 			sql: `
 				insert into users (user_uuid, user_name, user_age, created_at) values ($1, $2, $3, now())

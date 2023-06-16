@@ -141,14 +141,41 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt) (stri
 
 	// output table name
 	for _, node := range stmt.SelectStmt.FromClause {
-		if res, ok := node.Node.(*pg_query.Node_RangeVar); ok {
-			bu.WriteString("\n")
-			bu.WriteString("FROM")
-			bu.WriteString(" ")
-			bu.WriteString(res.RangeVar.Relname)
-			if res.RangeVar.Alias != nil {
-				bu.WriteString(" ")
-				bu.WriteString(res.RangeVar.Alias.Aliasname)
+		switch n := node.Node.(type) {
+		case *pg_query.Node_RangeVar:
+			res, err := nodeformatter.FormatFromAndTable(ctx, n)
+			if err != nil {
+				return "", err
+			}
+			bu.WriteString(res)
+		case *pg_query.Node_JoinExpr:
+			if nRangeVar, ok := n.JoinExpr.Larg.Node.(*pg_query.Node_RangeVar); ok {
+				res, err := nodeformatter.FormatFromAndTable(ctx, nRangeVar)
+				if err != nil {
+					return "", err
+				}
+				bu.WriteString(res)
+			}
+
+			if nRangeVar, ok := n.JoinExpr.Rarg.Node.(*pg_query.Node_RangeVar); ok {
+				switch n.JoinExpr.Jointype {
+				case pg_query.JoinType_JOIN_INNER:
+					bu.WriteString("\nINNER JOIN ")
+				}
+				bu.WriteString(nRangeVar.RangeVar.Relname)
+				if nRangeVar.RangeVar.Alias != nil {
+					bu.WriteString(" ")
+					bu.WriteString(nRangeVar.RangeVar.Alias.Aliasname)
+				}
+				bu.WriteString(" ON ")
+			}
+
+			if nAExpr, ok := n.JoinExpr.Quals.Node.(*pg_query.Node_AExpr); ok {
+				res, err := nodeformatter.FormatAExpr(ctx, nAExpr)
+				if err != nil {
+					return "", err
+				}
+				bu.WriteString(res)
 			}
 		}
 	}

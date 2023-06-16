@@ -14,8 +14,11 @@ func FormatAExpr(ctx context.Context, aeXpr *pg_query.Node_AExpr) (string, error
 
 	// output column name
 	if cRef, ok := aeXpr.AExpr.Lexpr.Node.(*pg_query.Node_ColumnRef); ok {
-		for _, f := range cRef.ColumnRef.Fields {
+		for fi, f := range cRef.ColumnRef.Fields {
 			if s, ok := f.Node.(*pg_query.Node_String_); ok {
+				if fi != 0 {
+					bu.WriteString(".")
+				}
 				bu.WriteString(s.String_.Sval)
 			}
 		}
@@ -37,9 +40,14 @@ func FormatAExpr(ctx context.Context, aeXpr *pg_query.Node_AExpr) (string, error
 
 	// output parameter (if named parameter)
 	if nRef, ok := aeXpr.AExpr.Rexpr.Node.(*pg_query.Node_ColumnRef); ok {
-		for _, f := range nRef.ColumnRef.Fields {
+		for fi, f := range nRef.ColumnRef.Fields {
 			if s, ok := f.Node.(*pg_query.Node_String_); ok {
-				bu.WriteString(" ")
+				if fi == 0 {
+					bu.WriteString(" ")
+				} else {
+					bu.WriteString(".")
+				}
+
 				bu.WriteString(s.String_.Sval)
 			}
 		}
