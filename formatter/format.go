@@ -151,7 +151,7 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt) (stri
 				}
 			}
 			if res.ResTarget.Name != "" {
-				bu.WriteString(" ")
+				bu.WriteString(" AS ")
 				bu.WriteString(res.ResTarget.Name)
 			}
 		}

@@ -47,7 +47,7 @@ FROM users
 			sql:  "select u.user_name un from users u",
 			want: `
 SELECT
-	u.user_name un
+	u.user_name AS un
 FROM users u
 `,
 		},
@@ -56,7 +56,7 @@ FROM users u
 			sql:  "select u.user_name as un from users as u",
 			want: `
 SELECT
-	u.user_name un
+	u.user_name AS un
 FROM users u
 `,
 		},
@@ -184,7 +184,7 @@ WHERE u.user_uuid = $1
 			sql:  `select COUNT(*) OVER () AS total, user_uuid from users`,
 			want: `
 SELECT
-	COUNT(*) OVER() total,
+	COUNT(*) OVER() AS total,
 	user_uuid
 FROM users
 `,
