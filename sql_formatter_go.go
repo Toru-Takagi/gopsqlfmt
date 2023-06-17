@@ -15,7 +15,7 @@ import (
 	"strings"
 )
 
-func main() {
+func sql_formatter_go_main() {
 	if len(os.Args) < 2 {
 		fmt.Println("Please provide a path to a file or directory")
 		return
