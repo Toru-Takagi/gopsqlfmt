@@ -159,43 +159,11 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt) (stri
 
 	// output table name
 	for _, node := range stmt.SelectStmt.FromClause {
-		switch n := node.Node.(type) {
-		case *pg_query.Node_RangeVar:
-			res, err := nodeformatter.FormatFromAndTable(ctx, n)
-			if err != nil {
-				return "", err
-			}
-			bu.WriteString(res)
-		case *pg_query.Node_JoinExpr:
-			if nRangeVar, ok := n.JoinExpr.Larg.Node.(*pg_query.Node_RangeVar); ok {
-				res, err := nodeformatter.FormatFromAndTable(ctx, nRangeVar)
-				if err != nil {
-					return "", err
-				}
-				bu.WriteString(res)
-			}
-
-			if nRangeVar, ok := n.JoinExpr.Rarg.Node.(*pg_query.Node_RangeVar); ok {
-				switch n.JoinExpr.Jointype {
-				case pg_query.JoinType_JOIN_INNER:
-					bu.WriteString("\nINNER JOIN ")
-				}
-				tableName, err := nodeformatter.FormatTableName(ctx, nRangeVar)
-				if err != nil {
-					return "", err
-				}
-				bu.WriteString(tableName)
-				bu.WriteString(" ON ")
-			}
-
-			if nAExpr, ok := n.JoinExpr.Quals.Node.(*pg_query.Node_AExpr); ok {
-				res, err := nodeformatter.FormatAExpr(ctx, nAExpr)
-				if err != nil {
-					return "", err
-				}
-				bu.WriteString(res)
-			}
+		res, err := FormatSelectStmtFromClause(ctx, node.Node)
+		if err != nil {
+			return "", err
 		}
+		bu.WriteString(res)
 	}
 
 	// output where clause
@@ -217,6 +185,59 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt) (stri
 		bu.WriteString("WHERE")
 		bu.WriteString(" ")
 		bu.WriteString(res)
+	}
+
+	return bu.String(), nil
+}
+
+func FormatSelectStmtFromClause(ctx context.Context, node any) (string, error) {
+	var bu strings.Builder
+
+	formatTableName := func(ctx context.Context, n *pg_query.Node_RangeVar) (string, error) {
+		table := n.RangeVar.Relname
+		if n.RangeVar.Alias != nil {
+			return fmt.Sprintf("%s %s", table, n.RangeVar.Alias.Aliasname), nil
+		}
+		return table, nil
+	}
+
+	switch n := node.(type) {
+	case *pg_query.Node_RangeVar:
+		tableName, err := formatTableName(ctx, n)
+		if err != nil {
+			return "", err
+		}
+		bu.WriteString("\n")
+		bu.WriteString("FROM")
+		bu.WriteString(" ")
+		bu.WriteString(tableName)
+	case *pg_query.Node_JoinExpr:
+		res, err := FormatSelectStmtFromClause(ctx, n.JoinExpr.Larg.Node)
+		if err != nil {
+			return "", nil
+		}
+		bu.WriteString(res)
+
+		if nRangeVar, ok := n.JoinExpr.Rarg.Node.(*pg_query.Node_RangeVar); ok {
+			switch n.JoinExpr.Jointype {
+			case pg_query.JoinType_JOIN_INNER:
+				bu.WriteString("\nINNER JOIN ")
+			}
+			tableName, err := formatTableName(ctx, nRangeVar)
+			if err != nil {
+				return "", err
+			}
+			bu.WriteString(tableName)
+			bu.WriteString(" ON ")
+		}
+
+		if nAExpr, ok := n.JoinExpr.Quals.Node.(*pg_query.Node_AExpr); ok {
+			res, err := nodeformatter.FormatAExpr(ctx, nAExpr)
+			if err != nil {
+				return "", err
+			}
+			bu.WriteString(res)
+		}
 	}
 
 	return bu.String(), nil
