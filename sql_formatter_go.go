@@ -1,7 +1,6 @@
 package main
 
 import (
-	"Toru-Takagi/sql_formatter_go/formatter"
 	"bytes"
 	"errors"
 	"fmt"
@@ -13,6 +12,8 @@ import (
 	"os"
 	"regexp"
 	"strings"
+
+	"github.com/Toru-Takagi/sql_formatter_go/formatter"
 )
 
 func sql_formatter_go_main() {

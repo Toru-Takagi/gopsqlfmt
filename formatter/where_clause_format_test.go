@@ -1,9 +1,10 @@
 package formatter_test
 
 import (
-	"Toru-Takagi/sql_formatter_go/formatter"
 	"errors"
 	"testing"
+
+	"github.com/Toru-Takagi/sql_formatter_go/formatter"
 
 	pg_query "github.com/pganalyze/pg_query_go/v4"
 	"github.com/stretchr/testify/assert"

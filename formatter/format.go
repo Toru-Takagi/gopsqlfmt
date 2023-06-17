@@ -1,10 +1,11 @@
 package formatter
 
 import (
-	nodeformatter "Toru-Takagi/sql_formatter_go/formatter/node_formatter"
 	"context"
 	"fmt"
 	"strings"
+
+	nodeformatter "github.com/Toru-Takagi/sql_formatter_go/formatter/node_formatter"
 
 	pg_query "github.com/pganalyze/pg_query_go/v4"
 )

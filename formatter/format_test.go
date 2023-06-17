@@ -1,7 +1,8 @@
 package formatter_test
 
 import (
-	"Toru-Takagi/sql_formatter_go/formatter"
+	"github.com/Toru-Takagi/sql_formatter_go/formatter"
+
 	"testing"
 
 	"github.com/google/go-cmp/cmp"

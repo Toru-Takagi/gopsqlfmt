@@ -1,7 +1,8 @@
 package formatter
 
 import (
-	nodeformatter "Toru-Takagi/sql_formatter_go/formatter/node_formatter"
+	nodeformatter "github.com/Toru-Takagi/sql_formatter_go/formatter/node_formatter"
+
 	"context"
 	"errors"
 	"strings"
