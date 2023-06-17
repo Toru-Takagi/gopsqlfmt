@@ -54,11 +54,14 @@ func sql_formatter_go_main() {
 							for _, v := range vspec.Values {
 								re := regexp.MustCompile(`^"(.*)"$`)
 								trimSQL := re.ReplaceAllString(strings.Trim(v.(*ast.BasicLit).Value, "`"), "$1")
-								result, err := formatter.Format(trimSQL)
-								if err != nil {
-									exit(err)
+								trimSQL = strings.TrimSpace(trimSQL)
+								if strings.HasPrefix(strings.ToUpper(trimSQL), "SELECT") {
+									result, err := formatter.Format(trimSQL)
+									if err != nil {
+										exit(err)
+									}
+									v.(*ast.BasicLit).Value = "`" + result + "`"
 								}
-								v.(*ast.BasicLit).Value = "`" + result + "`"
 							}
 						}
 					}
