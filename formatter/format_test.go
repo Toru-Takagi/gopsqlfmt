@@ -180,6 +180,26 @@ WHERE u.user_uuid = $1
 `,
 		},
 		{
+			name: "inner join and left join",
+			sql: `select u.user_name, ull.last_login_at, uage.user_age, uadd.address from users u
+						inner join user_last_login ull on u.user_uuid = ull.user_uuid
+						left join user_age uage on u.user_uuid = uage.user_uuid
+						left join user_address uadd on u.user_uuid = uadd.user_uuid
+						where u.user_uuid = $1`,
+			want: `
+SELECT
+	u.user_name,
+	ull.last_login_at,
+	uage.user_age,
+	uadd.address
+FROM users u
+INNER JOIN user_last_login ull ON u.user_uuid = ull.user_uuid
+LEFT JOIN user_age uage ON u.user_uuid = uage.user_uuid
+LEFT JOIN user_address uadd ON u.user_uuid = uadd.user_uuid
+WHERE u.user_uuid = $1
+`,
+		},
+		{
 			name: "window function of count",
 			sql:  `select COUNT(*) OVER () AS total, user_uuid from users`,
 			want: `

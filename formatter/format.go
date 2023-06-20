@@ -222,6 +222,8 @@ func FormatSelectStmtFromClause(ctx context.Context, node any) (string, error) {
 			switch n.JoinExpr.Jointype {
 			case pg_query.JoinType_JOIN_INNER:
 				bu.WriteString("\nINNER JOIN ")
+			case pg_query.JoinType_JOIN_LEFT:
+				bu.WriteString("\nLEFT JOIN ")
 			}
 			tableName, err := formatTableName(ctx, nRangeVar)
 			if err != nil {
