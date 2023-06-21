@@ -233,8 +233,15 @@ func FormatSelectStmtFromClause(ctx context.Context, node any) (string, error) {
 			bu.WriteString(" ON ")
 		}
 
-		if nAExpr, ok := n.JoinExpr.Quals.Node.(*pg_query.Node_AExpr); ok {
-			res, err := nodeformatter.FormatAExpr(ctx, nAExpr)
+		switch qualsNode := n.JoinExpr.Quals.Node.(type) {
+		case *pg_query.Node_AExpr:
+			res, err := nodeformatter.FormatAExpr(ctx, qualsNode)
+			if err != nil {
+				return "", err
+			}
+			bu.WriteString(res)
+		case *pg_query.Node_BoolExpr:
+			res, err := formatBoolExpr(ctx, qualsNode, 0)
 			if err != nil {
 				return "", err
 			}

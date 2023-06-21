@@ -200,6 +200,18 @@ WHERE u.user_uuid = $1
 `,
 		},
 		{
+			name: "join on and",
+			sql:  `SELECT u.user_name, ull.last_login_at FROM users u INNER JOIN user_last_login ull ON u.user_uuid = ull.user_uuid and u.email = ull.email`,
+			want: `
+SELECT
+	u.user_name,
+	ull.last_login_at
+FROM users u
+INNER JOIN user_last_login ull ON u.user_uuid = ull.user_uuid
+	AND u.email = ull.email
+`,
+		},
+		{
 			name: "window function of count",
 			sql:  `select COUNT(*) OVER () AS total, user_uuid from users`,
 			want: `
