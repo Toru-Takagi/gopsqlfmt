@@ -148,6 +148,21 @@ FROM users u
 `,
 		},
 		{
+			name: "select with subquery",
+			sql:  `select u.user_uuid, (select ull.last_login_at from user_last_login ull where ull.user_uuid = u.user_uuid) as last_login_at from users u`,
+			want: `
+SELECT
+	u.user_uuid,
+	(
+		SELECT
+			ull.last_login_at
+		FROM user_last_login ull
+		WHERE ull.user_uuid = u.user_uuid
+	) AS last_login_at
+FROM users u
+`,
+		},
+		{
 			name: "select with inner join",
 			sql:  `select u.user_name, ull.last_login_at from users u inner join user_last_login ull on u.user_uuid = ull.user_uuid where u.user_uuid = $1`,
 			want: `

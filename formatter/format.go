@@ -32,7 +32,7 @@ func Format(sql string) (string, error) {
 	for _, raw := range result.Stmts {
 		switch internal := raw.Stmt.Node.(type) {
 		case *pg_query.Node_SelectStmt:
-			res, err := FormatSelectStmt(ctx, internal)
+			res, err := FormatSelectStmt(ctx, internal, 0)
 			if err != nil {
 				return "", err
 			}
@@ -96,7 +96,7 @@ func Format(sql string) (string, error) {
 						strBuilder.WriteString(")")
 					}
 
-					res, err := FormatSelectStmt(ctx, sNode)
+					res, err := FormatSelectStmt(ctx, sNode, 0)
 					if err != nil {
 						return "", err
 					}
@@ -111,12 +111,15 @@ func Format(sql string) (string, error) {
 	}...).Replace(strBuilder.String()), nil
 }
 
-func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt) (string, error) {
+func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, indent int) (string, error) {
 	if len(stmt.SelectStmt.TargetList) == 0 {
 		return "", nil
 	}
 
 	var bu strings.Builder
+	for i := 0; i < indent; i++ {
+		bu.WriteString("\t")
+	}
 	bu.WriteString("SELECT")
 
 	// output column name
@@ -130,6 +133,9 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt) (stri
 								bu.WriteString(",")
 							}
 							bu.WriteString("\n\t")
+							for i := 0; i < indent; i++ {
+								bu.WriteString("\t")
+							}
 						} else {
 							bu.WriteString(".")
 						}
@@ -150,6 +156,22 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt) (stri
 					bu.WriteString(" OVER()")
 				}
 			}
+			if subLink, ok := res.ResTarget.Val.Node.(*pg_query.Node_SubLink); ok {
+				if selectStmt, ok := subLink.SubLink.Subselect.Node.(*pg_query.Node_SelectStmt); ok {
+					res, err := FormatSelectStmt(ctx, selectStmt, indent+2)
+					if err != nil {
+						return "", err
+					}
+					if ti != 0 {
+						bu.WriteString(",")
+					}
+					bu.WriteString("\n\t")
+					bu.WriteString("(\n")
+					bu.WriteString(res)
+					bu.WriteString("\n\t")
+					bu.WriteString(")")
+				}
+			}
 			if res.ResTarget.Name != "" {
 				bu.WriteString(" AS ")
 				bu.WriteString(res.ResTarget.Name)
@@ -159,7 +181,7 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt) (stri
 
 	// output table name
 	for _, node := range stmt.SelectStmt.FromClause {
-		res, err := FormatSelectStmtFromClause(ctx, node.Node)
+		res, err := FormatSelectStmtFromClause(ctx, node.Node, indent)
 		if err != nil {
 			return "", err
 		}
@@ -182,6 +204,9 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt) (stri
 			return "", err
 		}
 		bu.WriteString("\n")
+		for i := 0; i < indent; i++ {
+			bu.WriteString("\t")
+		}
 		bu.WriteString("WHERE")
 		bu.WriteString(" ")
 		bu.WriteString(res)
@@ -190,7 +215,7 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt) (stri
 	return bu.String(), nil
 }
 
-func FormatSelectStmtFromClause(ctx context.Context, node any) (string, error) {
+func FormatSelectStmtFromClause(ctx context.Context, node any, indent int) (string, error) {
 	var bu strings.Builder
 
 	formatTableName := func(ctx context.Context, n *pg_query.Node_RangeVar) (string, error) {
@@ -208,11 +233,14 @@ func FormatSelectStmtFromClause(ctx context.Context, node any) (string, error) {
 			return "", err
 		}
 		bu.WriteString("\n")
+		for i := 0; i < indent; i++ {
+			bu.WriteString("\t")
+		}
 		bu.WriteString("FROM")
 		bu.WriteString(" ")
 		bu.WriteString(tableName)
 	case *pg_query.Node_JoinExpr:
-		res, err := FormatSelectStmtFromClause(ctx, n.JoinExpr.Larg.Node)
+		res, err := FormatSelectStmtFromClause(ctx, n.JoinExpr.Larg.Node, indent)
 		if err != nil {
 			return "", nil
 		}
