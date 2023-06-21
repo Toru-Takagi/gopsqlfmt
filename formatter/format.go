@@ -125,7 +125,8 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 	// output column name
 	for ti, node := range stmt.SelectStmt.TargetList {
 		if res, ok := node.Node.(*pg_query.Node_ResTarget); ok {
-			if n, ok := res.ResTarget.Val.Node.(*pg_query.Node_ColumnRef); ok {
+			switch n := res.ResTarget.Val.Node.(type) {
+			case *pg_query.Node_ColumnRef:
 				for fi, f := range n.ColumnRef.Fields {
 					if s, ok := f.Node.(*pg_query.Node_String_); ok {
 						if fi == 0 {
@@ -142,22 +143,20 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 						bu.WriteString(s.String_.Sval)
 					}
 				}
-			}
-			if funcCall, ok := res.ResTarget.Val.Node.(*pg_query.Node_FuncCall); ok {
+			case *pg_query.Node_FuncCall:
 				bu.WriteString("\n\t")
-				for _, name := range funcCall.FuncCall.Funcname {
+				for _, name := range n.FuncCall.Funcname {
 					if s, ok := name.Node.(*pg_query.Node_String_); ok {
 						if s.String_.Sval == "count" {
 							bu.WriteString("COUNT(*)")
 						}
 					}
 				}
-				if funcCall.FuncCall.Over != nil {
+				if n.FuncCall.Over != nil {
 					bu.WriteString(" OVER()")
 				}
-			}
-			if subLink, ok := res.ResTarget.Val.Node.(*pg_query.Node_SubLink); ok {
-				if selectStmt, ok := subLink.SubLink.Subselect.Node.(*pg_query.Node_SelectStmt); ok {
+			case *pg_query.Node_SubLink:
+				if selectStmt, ok := n.SubLink.Subselect.Node.(*pg_query.Node_SelectStmt); ok {
 					res, err := FormatSelectStmt(ctx, selectStmt, indent+2)
 					if err != nil {
 						return "", err
