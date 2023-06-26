@@ -148,6 +148,16 @@ FROM users u
 `,
 		},
 		{
+			name: "limit",
+			sql:  `select user_uuid from users limit 10`,
+			want: `
+SELECT
+	user_uuid
+FROM users
+LIMIT 10
+`,
+		},
+		{
 			name: "select with subquery",
 			sql:  `select u.user_uuid, (select ull.last_login_at from user_last_login ull where ull.user_uuid = u.user_uuid) as last_login_at from users u`,
 			want: `

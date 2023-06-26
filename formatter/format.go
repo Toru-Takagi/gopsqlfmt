@@ -211,6 +211,22 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 		bu.WriteString(res)
 	}
 
+	// output limit clause
+	if stmt.SelectStmt.LimitCount != nil {
+		if aCount, ok := stmt.SelectStmt.LimitCount.Node.(*pg_query.Node_AConst); ok {
+			bu.WriteString("\n")
+			for i := 0; i < indent; i++ {
+				bu.WriteString("\t")
+			}
+			bu.WriteString("LIMIT")
+			bu.WriteString(" ")
+			switch val := aCount.AConst.Val.(type) {
+			case *pg_query.A_Const_Ival:
+				bu.WriteString(fmt.Sprint(val.Ival.Ival))
+			}
+		}
+	}
+
 	return bu.String(), nil
 }
 
