@@ -28,19 +28,32 @@ func FormatAExpr(ctx context.Context, aeXpr *pg_query.Node_AExpr) (string, error
 	for _, n := range aeXpr.AExpr.Name {
 		if s, ok := n.Node.(*pg_query.Node_String_); ok {
 			bu.WriteString(" ")
-			bu.WriteString(s.String_.Sval)
+			if s.String_.Sval == "<>" {
+				bu.WriteString("!=")
+			} else {
+				bu.WriteString(s.String_.Sval)
+			}
 		}
 	}
 
-	// output parameter (if $1)
-	if pRef, ok := aeXpr.AExpr.Rexpr.Node.(*pg_query.Node_ParamRef); ok {
-		bu.WriteString(" $")
-		bu.WriteString(fmt.Sprint(pRef.ParamRef.Number))
-	}
+	switch rexprNode := aeXpr.AExpr.Rexpr.Node.(type) {
+	case *pg_query.Node_AConst:
+		switch val := rexprNode.AConst.Val.(type) {
+		case *pg_query.A_Const_Ival:
+			bu.WriteString(fmt.Sprint(val.Ival.Ival))
+		case *pg_query.A_Const_Sval:
+			bu.WriteString(" ")
+			bu.WriteString("'")
+			bu.WriteString(val.Sval.Sval)
+			bu.WriteString("'")
+		case *pg_query.A_Const_Boolval:
+			bu.WriteString(" ")
+			bu.WriteString(fmt.Sprint(val.Boolval.Boolval))
+		}
 
 	// output parameter (if named parameter)
-	if nRef, ok := aeXpr.AExpr.Rexpr.Node.(*pg_query.Node_ColumnRef); ok {
-		for fi, f := range nRef.ColumnRef.Fields {
+	case *pg_query.Node_ColumnRef:
+		for fi, f := range rexprNode.ColumnRef.Fields {
 			if s, ok := f.Node.(*pg_query.Node_String_); ok {
 				if fi == 0 {
 					bu.WriteString(" ")
@@ -51,6 +64,11 @@ func FormatAExpr(ctx context.Context, aeXpr *pg_query.Node_AExpr) (string, error
 				bu.WriteString(s.String_.Sval)
 			}
 		}
+
+	// output parameter (if $1)
+	case *pg_query.Node_ParamRef:
+		bu.WriteString(" $")
+		bu.WriteString(fmt.Sprint(rexprNode.ParamRef.Number))
 	}
 
 	return bu.String(), nil
