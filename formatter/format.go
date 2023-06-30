@@ -213,12 +213,13 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 
 	// output sort clause
 	if stmt.SelectStmt.SortClause != nil {
+		bu.WriteString("\n")
+		for i := 0; i < indent; i++ {
+			bu.WriteString("\t")
+		}
+		bu.WriteString("ORDER BY")
+		bu.WriteString(" ")
 		for sortI, node := range stmt.SelectStmt.SortClause {
-			if sortI == 0 {
-				bu.WriteString("\n")
-				bu.WriteString("ORDER BY")
-				bu.WriteString(" ")
-			}
 			if sortBy, ok := node.Node.(*pg_query.Node_SortBy); ok {
 				if sortBy.SortBy.Node != nil {
 					switch n := sortBy.SortBy.Node.Node.(type) {
