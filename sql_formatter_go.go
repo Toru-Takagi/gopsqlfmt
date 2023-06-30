@@ -55,7 +55,7 @@ func sql_formatter_go_main() {
 func formatFile(path string) error {
 	isFormatted := false
 	fset := token.NewFileSet()
-	astFile, err := parser.ParseFile(fset, path, nil, 0)
+	astFile, err := parser.ParseFile(fset, path, nil, parser.ParseComments) // コード上のコメントが消えてほしくないので、parser.ParseCommentsを指定
 	if err != nil {
 		exit(err)
 	}
@@ -71,16 +71,18 @@ func formatFile(path string) error {
 				for _, spec := range x.Specs {
 					vspec := spec.(*ast.ValueSpec)
 					for _, v := range vspec.Values {
-						re := regexp.MustCompile(`^"(.*)"$`)
-						trimSQL := re.ReplaceAllString(strings.Trim(v.(*ast.BasicLit).Value, "`"), "$1")
-						trimSQL = strings.TrimSpace(trimSQL)
-						if strings.HasPrefix(strings.ToUpper(trimSQL), "SELECT") {
-							result, err := formatter.Format(trimSQL)
-							if err != nil {
-								exit(err)
+						if basicList, ok := v.(*ast.BasicLit); ok {
+							re := regexp.MustCompile(`^"(.*)"$`)
+							trimSQL := re.ReplaceAllString(strings.Trim(basicList.Value, "`"), "$1")
+							trimSQL = strings.TrimSpace(trimSQL)
+							if strings.HasPrefix(strings.ToUpper(trimSQL), "SELECT") {
+								result, err := formatter.Format(trimSQL)
+								if err != nil {
+									exit(err)
+								}
+								basicList.Value = "`" + result + "`"
+								isFormatted = true
 							}
-							v.(*ast.BasicLit).Value = "`" + result + "`"
-							isFormatted = true
 						}
 					}
 				}
