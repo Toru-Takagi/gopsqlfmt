@@ -158,6 +158,17 @@ LIMIT 10
 `,
 		},
 		{
+			name: "order by",
+			sql:  `select user_uuid from users u order by u.user_uuid desc, u.user_name asc`,
+			want: `
+SELECT
+	user_uuid
+FROM users u
+ORDER BY u.user_uuid DESC,
+	u.user_name ASC
+`,
+		},
+		{
 			name: "select with subquery",
 			sql:  `select u.user_uuid, (select ull.last_login_at from user_last_login ull where ull.user_uuid = u.user_uuid) as last_login_at from users u`,
 			want: `

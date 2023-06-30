@@ -211,6 +211,43 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 		bu.WriteString(res)
 	}
 
+	// output sort clause
+	if stmt.SelectStmt.SortClause != nil {
+		for sortI, node := range stmt.SelectStmt.SortClause {
+			if sortI == 0 {
+				bu.WriteString("\n")
+				bu.WriteString("ORDER BY")
+				bu.WriteString(" ")
+			}
+			if sortBy, ok := node.Node.(*pg_query.Node_SortBy); ok {
+				if sortBy.SortBy.Node != nil {
+					switch n := sortBy.SortBy.Node.Node.(type) {
+					case *pg_query.Node_ColumnRef:
+						if sortI != 0 {
+							bu.WriteString(",")
+							bu.WriteString("\n")
+							bu.WriteString("\t")
+						}
+						for fi, f := range n.ColumnRef.Fields {
+							if s, ok := f.Node.(*pg_query.Node_String_); ok {
+								if fi != 0 {
+									bu.WriteString(".")
+								}
+								bu.WriteString(s.String_.Sval)
+							}
+						}
+						switch sortBy.SortBy.SortbyDir {
+						case pg_query.SortByDir_SORTBY_ASC:
+							bu.WriteString(" ASC")
+						case pg_query.SortByDir_SORTBY_DESC:
+							bu.WriteString(" DESC")
+						}
+					}
+				}
+			}
+		}
+	}
+
 	// output limit clause
 	if stmt.SelectStmt.LimitCount != nil {
 		if aCount, ok := stmt.SelectStmt.LimitCount.Node.(*pg_query.Node_AConst); ok {
