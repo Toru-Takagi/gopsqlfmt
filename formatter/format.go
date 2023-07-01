@@ -150,6 +150,20 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 						if s.String_.Sval == "count" {
 							bu.WriteString("COUNT(*)")
 						}
+						if s.String_.Sval == "current_setting" {
+							bu.WriteString("CURRENT_SETTING")
+							bu.WriteString("(")
+							bu.WriteString("'")
+						}
+					}
+				}
+				for _, arg := range n.FuncCall.Args {
+					if a, ok := arg.Node.(*pg_query.Node_AConst); ok {
+						if i, ok := a.AConst.Val.(*pg_query.A_Const_Sval); ok {
+							bu.WriteString(i.Sval.Sval)
+							bu.WriteString("'")
+							bu.WriteString(")")
+						}
 					}
 				}
 				if n.FuncCall.Over != nil {

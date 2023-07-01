@@ -180,6 +180,14 @@ ORDER BY u.user_uuid DESC,
 `,
 		},
 		{
+			name: "current_setting",
+			sql:  `select current_setting('search_path') as search_path`,
+			want: `
+SELECT
+	CURRENT_SETTING('search_path') AS search_path
+`,
+		},
+		{
 			name: "select with subquery",
 			sql:  `select u.user_uuid, (select ull.last_login_at from user_last_login ull where ull.user_uuid = u.user_uuid) as last_login_at from users u`,
 			want: `
