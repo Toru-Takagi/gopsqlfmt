@@ -38,18 +38,12 @@ func FormatAExpr(ctx context.Context, aeXpr *pg_query.Node_AExpr) (string, error
 
 	switch rexprNode := aeXpr.AExpr.Rexpr.Node.(type) {
 	case *pg_query.Node_AConst:
-		switch val := rexprNode.AConst.Val.(type) {
-		case *pg_query.A_Const_Ival:
-			bu.WriteString(fmt.Sprint(val.Ival.Ival))
-		case *pg_query.A_Const_Sval:
-			bu.WriteString(" ")
-			bu.WriteString("'")
-			bu.WriteString(val.Sval.Sval)
-			bu.WriteString("'")
-		case *pg_query.A_Const_Boolval:
-			bu.WriteString(" ")
-			bu.WriteString(fmt.Sprint(val.Boolval.Boolval))
+		res, err := FormatAConst(ctx, rexprNode)
+		if err != nil {
+			return "", err
 		}
+		bu.WriteString(" ")
+		bu.WriteString(res)
 
 	// output parameter (if named parameter)
 	case *pg_query.Node_ColumnRef:

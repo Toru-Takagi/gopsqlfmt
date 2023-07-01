@@ -148,24 +148,36 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 				for _, name := range n.FuncCall.Funcname {
 					if s, ok := name.Node.(*pg_query.Node_String_); ok {
 						if s.String_.Sval == "count" {
-							bu.WriteString("COUNT(*)")
+							bu.WriteString("COUNT(*")
 						}
 						if s.String_.Sval == "current_setting" {
 							bu.WriteString("CURRENT_SETTING")
 							bu.WriteString("(")
-							bu.WriteString("'")
+						}
+						if s.String_.Sval == "set_config" {
+							bu.WriteString("SET_CONFIG")
+							bu.WriteString("(")
 						}
 					}
 				}
-				for _, arg := range n.FuncCall.Args {
+				for argI, arg := range n.FuncCall.Args {
+					if argI != 0 {
+						bu.WriteString(",")
+						bu.WriteString(" ")
+					}
 					if a, ok := arg.Node.(*pg_query.Node_AConst); ok {
-						if i, ok := a.AConst.Val.(*pg_query.A_Const_Sval); ok {
-							bu.WriteString(i.Sval.Sval)
-							bu.WriteString("'")
-							bu.WriteString(")")
+						res, err := nodeformatter.FormatAConst(ctx, a)
+						if err != nil {
+							return "", err
 						}
+						bu.WriteString(res)
+					}
+					if paramRef, ok := arg.Node.(*pg_query.Node_ParamRef); ok {
+						bu.WriteString("$")
+						bu.WriteString(fmt.Sprint(paramRef.ParamRef.Number))
 					}
 				}
+				bu.WriteString(")")
 				if n.FuncCall.Over != nil {
 					bu.WriteString(" OVER()")
 				}
@@ -265,17 +277,19 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 
 	// output limit clause
 	if stmt.SelectStmt.LimitCount != nil {
+		bu.WriteString("\n")
+		for i := 0; i < indent; i++ {
+			bu.WriteString("\t")
+		}
+		bu.WriteString("LIMIT")
+		bu.WriteString(" ")
+
 		if aCount, ok := stmt.SelectStmt.LimitCount.Node.(*pg_query.Node_AConst); ok {
-			bu.WriteString("\n")
-			for i := 0; i < indent; i++ {
-				bu.WriteString("\t")
+			res, err := nodeformatter.FormatAConst(ctx, aCount)
+			if err != nil {
+				return "", err
 			}
-			bu.WriteString("LIMIT")
-			bu.WriteString(" ")
-			switch val := aCount.AConst.Val.(type) {
-			case *pg_query.A_Const_Ival:
-				bu.WriteString(fmt.Sprint(val.Ival.Ival))
-			}
+			bu.WriteString(res)
 		}
 	}
 

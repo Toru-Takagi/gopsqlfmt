@@ -188,6 +188,14 @@ SELECT
 `,
 		},
 		{
+			name: "set_config",
+			sql:  `select set_config('test', $1, false)`,
+			want: `
+SELECT
+	SET_CONFIG('test', $1, false)
+`,
+		},
+		{
 			name: "select with subquery",
 			sql:  `select u.user_uuid, (select ull.last_login_at from user_last_login ull where ull.user_uuid = u.user_uuid) as last_login_at from users u`,
 			want: `
