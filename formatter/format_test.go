@@ -196,6 +196,15 @@ SELECT
 `,
 		},
 		{
+			name: "array_agg",
+			sql:  `select array_agg(t.tablename ORDER BY t.tablename) from pg_catalog.pg_tables AS t`,
+			want: `
+SELECT
+	ARRAY_AGG(t.tablename ORDER BY t.tablename)
+FROM pg_catalog.pg_tables t
+`,
+		},
+		{
 			name: "select with subquery",
 			sql:  `select u.user_uuid, (select ull.last_login_at from user_last_login ull where ull.user_uuid = u.user_uuid) as last_login_at from users u`,
 			want: `

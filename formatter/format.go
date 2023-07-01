@@ -148,7 +148,8 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 				for _, name := range n.FuncCall.Funcname {
 					if s, ok := name.Node.(*pg_query.Node_String_); ok {
 						if s.String_.Sval == "count" {
-							bu.WriteString("COUNT(*")
+							bu.WriteString("COUNT")
+							bu.WriteString("(*")
 						}
 						if s.String_.Sval == "current_setting" {
 							bu.WriteString("CURRENT_SETTING")
@@ -156,6 +157,10 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 						}
 						if s.String_.Sval == "set_config" {
 							bu.WriteString("SET_CONFIG")
+							bu.WriteString("(")
+						}
+						if s.String_.Sval == "array_agg" {
+							bu.WriteString("ARRAY_AGG")
 							bu.WriteString("(")
 						}
 					}
@@ -175,6 +180,49 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 					if paramRef, ok := arg.Node.(*pg_query.Node_ParamRef); ok {
 						bu.WriteString("$")
 						bu.WriteString(fmt.Sprint(paramRef.ParamRef.Number))
+					}
+					if cRef, ok := arg.Node.(*pg_query.Node_ColumnRef); ok {
+						for fi, f := range cRef.ColumnRef.Fields {
+							if s, ok := f.Node.(*pg_query.Node_String_); ok {
+								if fi != 0 {
+									bu.WriteString(".")
+								}
+								bu.WriteString(s.String_.Sval)
+							}
+						}
+					}
+				}
+				for sortI, order := range n.FuncCall.AggOrder {
+					if sortI == 0 {
+						bu.WriteString(" ")
+						bu.WriteString("ORDER BY")
+						bu.WriteString(" ")
+					}
+					if sortBy, ok := order.Node.(*pg_query.Node_SortBy); ok {
+						if sortBy.SortBy.Node != nil {
+							switch n := sortBy.SortBy.Node.Node.(type) {
+							case *pg_query.Node_ColumnRef:
+								if sortI != 0 {
+									bu.WriteString(",")
+									bu.WriteString("\n")
+									bu.WriteString("\t")
+								}
+								for fi, f := range n.ColumnRef.Fields {
+									if s, ok := f.Node.(*pg_query.Node_String_); ok {
+										if fi != 0 {
+											bu.WriteString(".")
+										}
+										bu.WriteString(s.String_.Sval)
+									}
+								}
+								switch sortBy.SortBy.SortbyDir {
+								case pg_query.SortByDir_SORTBY_ASC:
+									bu.WriteString(" ASC")
+								case pg_query.SortByDir_SORTBY_DESC:
+									bu.WriteString(" DESC")
+								}
+							}
+						}
 					}
 				}
 				bu.WriteString(")")
@@ -300,11 +348,17 @@ func FormatSelectStmtFromClause(ctx context.Context, node any, indent int) (stri
 	var bu strings.Builder
 
 	formatTableName := func(ctx context.Context, n *pg_query.Node_RangeVar) (string, error) {
-		table := n.RangeVar.Relname
-		if n.RangeVar.Alias != nil {
-			return fmt.Sprintf("%s %s", table, n.RangeVar.Alias.Aliasname), nil
+		tName := ""
+		if n.RangeVar.Schemaname != "" {
+			tName += n.RangeVar.Schemaname
+			tName += "."
 		}
-		return table, nil
+		tName += n.RangeVar.Relname
+		if n.RangeVar.Alias != nil {
+			tName += " "
+			tName += n.RangeVar.Alias.Aliasname
+		}
+		return tName, nil
 	}
 
 	switch n := node.(type) {
