@@ -180,6 +180,16 @@ ORDER BY u.user_uuid DESC,
 `,
 		},
 		{
+			name: "FOR UPDATE SKIP LOCKED",
+			sql:  `select user_uuid from users for update skip locked`,
+			want: `
+SELECT
+	user_uuid
+FROM users
+FOR UPDATE SKIP LOCKED
+`,
+		},
+		{
 			name: "current_setting",
 			sql:  `select current_setting('search_path') as search_path`,
 			want: `

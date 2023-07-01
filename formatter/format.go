@@ -341,6 +341,24 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 		}
 	}
 
+	for _, clause := range stmt.SelectStmt.LockingClause {
+		if locking, ok := clause.Node.(*pg_query.Node_LockingClause); ok {
+			bu.WriteString("\n")
+			for i := 0; i < indent; i++ {
+				bu.WriteString("\t")
+			}
+			switch locking.LockingClause.Strength {
+			case pg_query.LockClauseStrength_LCS_FORUPDATE:
+				bu.WriteString("FOR UPDATE")
+			}
+
+			switch locking.LockingClause.WaitPolicy {
+			case pg_query.LockWaitPolicy_LockWaitSkip:
+				bu.WriteString(" SKIP LOCKED")
+			}
+		}
+	}
+
 	return bu.String(), nil
 }
 
