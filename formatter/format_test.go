@@ -206,13 +206,14 @@ FROM pg_catalog.pg_tables t
 		},
 		{
 			name: "select with subquery",
-			sql:  `select u.user_uuid, (select ull.last_login_at from user_last_login ull where ull.user_uuid = u.user_uuid) as last_login_at from users u`,
+			sql:  `select u.user_uuid, (select ull.last_login_at, current_setting('test') from user_last_login ull where ull.user_uuid = u.user_uuid) as last_login_at from users u`,
 			want: `
 SELECT
 	u.user_uuid,
 	(
 		SELECT
-			ull.last_login_at
+			ull.last_login_at,
+			CURRENT_SETTING('test')
 		FROM user_last_login ull
 		WHERE ull.user_uuid = u.user_uuid
 	) AS last_login_at

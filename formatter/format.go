@@ -124,15 +124,15 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 
 	// output column name
 	for ti, node := range stmt.SelectStmt.TargetList {
+		if ti != 0 {
+			bu.WriteString(",")
+		}
 		if res, ok := node.Node.(*pg_query.Node_ResTarget); ok {
 			switch n := res.ResTarget.Val.Node.(type) {
 			case *pg_query.Node_ColumnRef:
 				for fi, f := range n.ColumnRef.Fields {
 					if s, ok := f.Node.(*pg_query.Node_String_); ok {
 						if fi == 0 {
-							if ti != 0 {
-								bu.WriteString(",")
-							}
 							bu.WriteString("\n\t")
 							for i := 0; i < indent; i++ {
 								bu.WriteString("\t")
@@ -145,6 +145,9 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 				}
 			case *pg_query.Node_FuncCall:
 				bu.WriteString("\n\t")
+				for i := 0; i < indent; i++ {
+					bu.WriteString("\t")
+				}
 				for _, name := range n.FuncCall.Funcname {
 					if s, ok := name.Node.(*pg_query.Node_String_); ok {
 						if s.String_.Sval == "count" {
@@ -234,9 +237,6 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 					res, err := FormatSelectStmt(ctx, selectStmt, indent+2)
 					if err != nil {
 						return "", err
-					}
-					if ti != 0 {
-						bu.WriteString(",")
 					}
 					bu.WriteString("\n\t")
 					bu.WriteString("(\n")
