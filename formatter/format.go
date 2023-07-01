@@ -285,6 +285,28 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 		bu.WriteString(res)
 	}
 
+	// output group clause
+	for gIndex, gClause := range stmt.SelectStmt.GroupClause {
+		if gIndex == 0 {
+			bu.WriteString("\n")
+			bu.WriteString("GROUP BY")
+			bu.WriteString(" ")
+		} else {
+			bu.WriteString(",")
+			bu.WriteString(" ")
+		}
+		if cRef, ok := gClause.Node.(*pg_query.Node_ColumnRef); ok {
+			for fi, f := range cRef.ColumnRef.Fields {
+				if s, ok := f.Node.(*pg_query.Node_String_); ok {
+					if fi != 0 {
+						bu.WriteString(".")
+					}
+					bu.WriteString(s.String_.Sval)
+				}
+			}
+		}
+	}
+
 	// output sort clause
 	if stmt.SelectStmt.SortClause != nil {
 		bu.WriteString("\n")

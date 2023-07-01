@@ -180,6 +180,16 @@ ORDER BY u.user_uuid DESC,
 `,
 		},
 		{
+			name: "group by",
+			sql:  `select count(*) from users u group by u.name, u.age`,
+			want: `
+SELECT
+	COUNT(*)
+FROM users u
+GROUP BY u.name, u.age
+`,
+		},
+		{
 			name: "FOR UPDATE SKIP LOCKED",
 			sql:  `select user_uuid from users for update skip locked`,
 			want: `
