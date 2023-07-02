@@ -155,16 +155,35 @@ func Format(sql string) (string, error) {
 			if internal.InsertStmt.OnConflictClause != nil {
 				strBuilder.WriteString("\n")
 				strBuilder.WriteString("ON CONFLICT")
-				strBuilder.WriteString("(")
-				for _, elm := range internal.InsertStmt.OnConflictClause.Infer.IndexElems {
-					if idxElm, ok := elm.Node.(*pg_query.Node_IndexElem); ok {
-						strBuilder.WriteString(idxElm.IndexElem.Name)
+				if internal.InsertStmt.OnConflictClause.Infer != nil {
+					if len(internal.InsertStmt.OnConflictClause.Infer.IndexElems) > 0 {
+						strBuilder.WriteString("(")
+					}
+					for _, elm := range internal.InsertStmt.OnConflictClause.Infer.IndexElems {
+						if idxElm, ok := elm.Node.(*pg_query.Node_IndexElem); ok {
+							strBuilder.WriteString(idxElm.IndexElem.Name)
+						}
+					}
+					if len(internal.InsertStmt.OnConflictClause.Infer.IndexElems) > 0 {
+						strBuilder.WriteString(")")
+					}
+
+					if internal.InsertStmt.OnConflictClause.Infer.Conname != "" {
+						strBuilder.WriteString(" ")
+						strBuilder.WriteString("ON CONSTRAINT")
+						strBuilder.WriteString(" ")
+						strBuilder.WriteString(internal.InsertStmt.OnConflictClause.Infer.Conname)
 					}
 				}
-				strBuilder.WriteString(")")
 
-				strBuilder.WriteString("\n")
-				strBuilder.WriteString("DO UPDATE SET")
+				switch internal.InsertStmt.OnConflictClause.Action {
+				case pg_query.OnConflictAction_ONCONFLICT_NOTHING:
+					strBuilder.WriteString("\n")
+					strBuilder.WriteString("DO NOTHING")
+				case pg_query.OnConflictAction_ONCONFLICT_UPDATE:
+					strBuilder.WriteString("\n")
+					strBuilder.WriteString("DO UPDATE SET")
+				}
 				for targetI, target := range internal.InsertStmt.OnConflictClause.TargetList {
 					if res, ok := target.Node.(*pg_query.Node_ResTarget); ok {
 						if targetI != 0 {

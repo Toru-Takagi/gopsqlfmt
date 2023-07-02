@@ -410,7 +410,7 @@ INSERT INTO users(
 `,
 		},
 		{
-			name: "insert: on conflict",
+			name: "insert: on conflict do update",
 			sql: `
 				insert into users (user_uuid, user_name, user_age) values ($1, $2, $3)
 				on conflict (user_uuid) do update set user_name = EXCLUDED.user_name, user_age = EXCLUDED.user_age, updated_at = now()
@@ -430,6 +430,26 @@ DO UPDATE SET
 	user_name = EXCLUDED.user_name,
 	user_age = EXCLUDED.user_age,
 	updated_at = NOW()
+`,
+		},
+		{
+			name: "insert: on conflict do nothing",
+			sql: `
+				insert into users (user_uuid, user_name, user_age) values ($1, $2, $3)
+				on conflict on constraint user_unique_key do nothing
+			`,
+			want: `
+INSERT INTO users(
+	user_uuid,
+	user_name,
+	user_age
+) VALUES (
+	$1,
+	$2,
+	$3
+)
+ON CONFLICT ON CONSTRAINT user_unique_key
+DO NOTHING
 `,
 		},
 	}
