@@ -55,6 +55,21 @@ func FormatAExpr(ctx context.Context, aeXpr *pg_query.Node_AExpr) (string, error
 	case *pg_query.Node_ParamRef:
 		bu.WriteString(" $")
 		bu.WriteString(fmt.Sprint(rexprNode.ParamRef.Number))
+
+	case *pg_query.Node_FuncCall:
+		funcCall, err := FormatFuncname(ctx, rexprNode)
+		if err != nil {
+			return "", err
+		}
+		bu.WriteString(" ")
+		bu.WriteString(funcCall)
+
+		arg, err := FormatFuncCallArgs(ctx, rexprNode)
+		if err != nil {
+			return "", err
+		}
+		bu.WriteString(arg)
+		bu.WriteString(")")
 	}
 
 	return bu.String(), nil

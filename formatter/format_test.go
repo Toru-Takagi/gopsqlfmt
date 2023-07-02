@@ -489,6 +489,14 @@ DELETE FROM users
 WHERE user_uuid = $1
 `,
 		},
+		{
+			name: "delete: current_setting",
+			sql:  `delete from users where locale = current_setting('locale')`,
+			want: `
+DELETE FROM users
+WHERE locale = CURRENT_SETTING('locale')
+`,
+		},
 	}
 
 	for _, tt := range tests {
