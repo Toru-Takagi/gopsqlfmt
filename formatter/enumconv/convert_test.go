@@ -1,11 +1,10 @@
-package formatter_test
+package enumconv_test
 
 import (
 	"errors"
 	"testing"
 
-	"github.com/Toru-Takagi/sql_formatter_go/formatter"
-
+	"github.com/Toru-Takagi/sql_formatter_go/formatter/enumconv"
 	pg_query "github.com/pganalyze/pg_query_go/v4"
 	"github.com/stretchr/testify/assert"
 )
@@ -47,7 +46,7 @@ func TestBoolExprTypeToString(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			actual, err := formatter.BoolExprTypeToString(tt.exprType)
+			actual, err := enumconv.BoolExprTypeToString(tt.exprType)
 			assert.Equal(t, tt.want, actual)
 			assert.Equal(t, tt.wantErr, err)
 		})

@@ -1,6 +1,7 @@
 package formatter
 
 import (
+	"github.com/Toru-Takagi/sql_formatter_go/formatter/enumconv"
 	nodeformatter "github.com/Toru-Takagi/sql_formatter_go/formatter/node_formatter"
 
 	"context"
@@ -25,7 +26,7 @@ func formatBoolExpr(ctx context.Context, be *pg_query.Node_BoolExpr, indent int)
 				for i := 0; i <= indent; i++ {
 					bu.WriteString("\t")
 				}
-				boolStr, err := BoolExprTypeToString(be.BoolExpr.Boolop)
+				boolStr, err := enumconv.BoolExprTypeToString(be.BoolExpr.Boolop)
 				if err != nil {
 					return "", err
 				}
@@ -41,7 +42,7 @@ func formatBoolExpr(ctx context.Context, be *pg_query.Node_BoolExpr, indent int)
 			if argI != 0 {
 				bu.WriteString("\n")
 				bu.WriteString("\t")
-				boolStr, err := BoolExprTypeToString(be.BoolExpr.Boolop)
+				boolStr, err := enumconv.BoolExprTypeToString(be.BoolExpr.Boolop)
 				if err != nil {
 					return "", err
 				}
@@ -62,16 +63,4 @@ func formatBoolExpr(ctx context.Context, be *pg_query.Node_BoolExpr, indent int)
 	}
 
 	return bu.String(), nil
-}
-
-func BoolExprTypeToString(bet pg_query.BoolExprType) (string, error) {
-	switch bet {
-	case pg_query.BoolExprType_AND_EXPR:
-		return "AND", nil
-	case pg_query.BoolExprType_OR_EXPR:
-		return "OR", nil
-	case pg_query.BoolExprType_NOT_EXPR:
-		return "NOT", nil
-	}
-	return "", errors.New("BoolExprTypeToString: unknown BoolExprType")
 }
