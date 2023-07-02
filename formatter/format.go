@@ -252,6 +252,35 @@ func Format(sql string) (string, error) {
 				strBuilder.WriteString(" ")
 				strBuilder.WriteString(res)
 			}
+		case *pg_query.Node_DeleteStmt:
+			strBuilder.WriteString("DELETE FROM")
+
+			// output table name
+			if stmt.DeleteStmt.Relation != nil {
+				strBuilder.WriteString(" ")
+				strBuilder.WriteString(stmt.DeleteStmt.Relation.Relname)
+			}
+
+			// output where clause
+			if stmt.DeleteStmt.WhereClause != nil {
+				var (
+					res string
+					err error
+				)
+				if n, ok := stmt.DeleteStmt.WhereClause.Node.(*pg_query.Node_AExpr); ok {
+					res, err = nodeformatter.FormatAExpr(ctx, n)
+				}
+				if nBoolExpr, ok := stmt.DeleteStmt.WhereClause.Node.(*pg_query.Node_BoolExpr); ok {
+					res, err = formatBoolExpr(ctx, nBoolExpr, 0)
+				}
+				if err != nil {
+					return "", err
+				}
+				strBuilder.WriteString("\n")
+				strBuilder.WriteString("WHERE")
+				strBuilder.WriteString(" ")
+				strBuilder.WriteString(res)
+			}
 		}
 	}
 	strBuilder.WriteString("\n")

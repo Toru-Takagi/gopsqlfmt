@@ -481,6 +481,14 @@ SET
 WHERE user_uuid = $3
 `,
 		},
+		{
+			name: "simple delete",
+			sql:  `delete from users where user_uuid = $1`,
+			want: `
+DELETE FROM users
+WHERE user_uuid = $1
+`,
+		},
 	}
 
 	for _, tt := range tests {
