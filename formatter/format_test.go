@@ -235,6 +235,15 @@ FROM pg_catalog.pg_tables t
 `,
 		},
 		{
+			name: "reserved word: user",
+			sql:  "SELECT u.user_name FROM user u ",
+			want: `
+SELECT
+	u.user_name
+FROM user u
+`,
+		},
+		{
 			name: "select with subquery",
 			sql:  `select u.user_uuid, (select ull.last_login_at, current_setting('test') from user_last_login ull where ull.user_uuid = u.user_uuid) as last_login_at from users u`,
 			want: `

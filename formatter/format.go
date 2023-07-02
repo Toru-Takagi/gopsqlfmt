@@ -454,6 +454,28 @@ func FormatSelectStmtFromClause(ctx context.Context, node any, indent int) (stri
 		bu.WriteString("FROM")
 		bu.WriteString(" ")
 		bu.WriteString(tableName)
+	case *pg_query.Node_RangeFunction:
+		bu.WriteString("\n")
+		for i := 0; i < indent; i++ {
+			bu.WriteString("\t")
+		}
+		bu.WriteString("FROM")
+		bu.WriteString(" ")
+		for _, fn := range n.RangeFunction.Functions {
+			if list, ok := fn.Node.(*pg_query.Node_List); ok {
+				for _, item := range list.List.Items {
+					if sqlvalueFunc, ok := item.Node.(*pg_query.Node_SqlvalueFunction); ok {
+						if sqlvalueFunc.SqlvalueFunction.Op == pg_query.SQLValueFunctionOp_SVFOP_USER {
+							bu.WriteString("user")
+						}
+					}
+				}
+			}
+		}
+		if n.RangeFunction.Alias != nil {
+			bu.WriteString(" ")
+			bu.WriteString(n.RangeFunction.Alias.Aliasname)
+		}
 	case *pg_query.Node_JoinExpr:
 		res, err := FormatSelectStmtFromClause(ctx, n.JoinExpr.Larg.Node, indent)
 		if err != nil {
