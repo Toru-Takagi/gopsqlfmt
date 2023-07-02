@@ -409,6 +409,29 @@ INSERT INTO users(
 )
 `,
 		},
+		{
+			name: "insert: on conflict",
+			sql: `
+				insert into users (user_uuid, user_name, user_age) values ($1, $2, $3)
+				on conflict (user_uuid) do update set user_name = EXCLUDED.user_name, user_age = EXCLUDED.user_age, updated_at = now()
+			`,
+			want: `
+INSERT INTO users(
+	user_uuid,
+	user_name,
+	user_age
+) VALUES (
+	$1,
+	$2,
+	$3
+)
+ON CONFLICT(user_uuid)
+DO UPDATE SET
+	user_name = EXCLUDED.user_name,
+	user_age = EXCLUDED.user_age,
+	updated_at = NOW()
+`,
+		},
 	}
 
 	for _, tt := range tests {

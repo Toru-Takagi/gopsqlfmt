@@ -150,6 +150,59 @@ func Format(sql string) (string, error) {
 					strBuilder.WriteString(res)
 				}
 			}
+
+			// output on conflict
+			if internal.InsertStmt.OnConflictClause != nil {
+				strBuilder.WriteString("\n")
+				strBuilder.WriteString("ON CONFLICT")
+				strBuilder.WriteString("(")
+				for _, elm := range internal.InsertStmt.OnConflictClause.Infer.IndexElems {
+					if idxElm, ok := elm.Node.(*pg_query.Node_IndexElem); ok {
+						strBuilder.WriteString(idxElm.IndexElem.Name)
+					}
+				}
+				strBuilder.WriteString(")")
+
+				strBuilder.WriteString("\n")
+				strBuilder.WriteString("DO UPDATE SET")
+				for targetI, target := range internal.InsertStmt.OnConflictClause.TargetList {
+					if res, ok := target.Node.(*pg_query.Node_ResTarget); ok {
+						if targetI != 0 {
+							strBuilder.WriteString(",")
+						}
+						strBuilder.WriteString("\n")
+						strBuilder.WriteString("\t")
+						strBuilder.WriteString(res.ResTarget.Name)
+						strBuilder.WriteString(" = ")
+
+						if res.ResTarget.Val != nil {
+							switch n := res.ResTarget.Val.Node.(type) {
+							case *pg_query.Node_ColumnRef:
+								for fi, f := range n.ColumnRef.Fields {
+									if s, ok := f.Node.(*pg_query.Node_String_); ok {
+										if fi != 0 {
+											strBuilder.WriteString(".")
+										}
+										if s.String_.Sval == "excluded" {
+											strBuilder.WriteString("EXCLUDED")
+										} else {
+											strBuilder.WriteString(s.String_.Sval)
+										}
+									}
+								}
+							case *pg_query.Node_FuncCall:
+								for _, name := range n.FuncCall.Funcname {
+									if s, ok := name.Node.(*pg_query.Node_String_); ok {
+										if s.String_.Sval == "now" {
+											strBuilder.WriteString("NOW()")
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
 		}
 	}
 	strBuilder.WriteString("\n")
