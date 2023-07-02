@@ -385,6 +385,19 @@ FROM users
 WHERE user_uuid = $1
 `,
 		},
+		{
+			name: "insert: gen_random_uuid",
+			sql:  `insert into users (user_uuid, user_name) values (gen_random_uuid(), $1)`,
+			want: `
+INSERT INTO users(
+	user_uuid,
+	user_name
+) VALUES (
+	GEN_RANDOM_UUID(),
+	$1
+)
+`,
+		},
 	}
 
 	for _, tt := range tests {

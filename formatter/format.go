@@ -95,6 +95,11 @@ func Format(sql string) (string, error) {
 												strBuilder.WriteString("\t")
 												strBuilder.WriteString("NOW()")
 											}
+											if s.String_.Sval == "gen_random_uuid" {
+												strBuilder.WriteString("\n")
+												strBuilder.WriteString("\t")
+												strBuilder.WriteString("GEN_RANDOM_UUID()")
+											}
 										}
 									}
 								}
