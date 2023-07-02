@@ -180,6 +180,16 @@ ORDER BY u.user_uuid DESC,
 `,
 		},
 		{
+			name: "order by with function",
+			sql:  `select user_uuid from users u order by min(u.registered_at)`,
+			want: `
+SELECT
+	user_uuid
+FROM users u
+ORDER BY MIN(u.registered_at)
+`,
+		},
+		{
 			name: "group by",
 			sql:  `select count(*) from users u group by u.name, u.age`,
 			want: `

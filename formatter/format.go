@@ -339,6 +339,46 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 						case pg_query.SortByDir_SORTBY_DESC:
 							bu.WriteString(" DESC")
 						}
+					case *pg_query.Node_FuncCall:
+						for i := 0; i < indent; i++ {
+							bu.WriteString("\t")
+						}
+						for _, name := range n.FuncCall.Funcname {
+							if s, ok := name.Node.(*pg_query.Node_String_); ok {
+								if s.String_.Sval == "min" {
+									bu.WriteString("MIN")
+									bu.WriteString("(")
+								}
+							}
+						}
+						for argI, arg := range n.FuncCall.Args {
+							if argI != 0 {
+								bu.WriteString(",")
+								bu.WriteString(" ")
+							}
+							if a, ok := arg.Node.(*pg_query.Node_AConst); ok {
+								res, err := nodeformatter.FormatAConst(ctx, a)
+								if err != nil {
+									return "", err
+								}
+								bu.WriteString(res)
+							}
+							if paramRef, ok := arg.Node.(*pg_query.Node_ParamRef); ok {
+								bu.WriteString("$")
+								bu.WriteString(fmt.Sprint(paramRef.ParamRef.Number))
+							}
+							if cRef, ok := arg.Node.(*pg_query.Node_ColumnRef); ok {
+								for fi, f := range cRef.ColumnRef.Fields {
+									if s, ok := f.Node.(*pg_query.Node_String_); ok {
+										if fi != 0 {
+											bu.WriteString(".")
+										}
+										bu.WriteString(s.String_.Sval)
+									}
+								}
+							}
+						}
+						bu.WriteString(")")
 					}
 				}
 			}
