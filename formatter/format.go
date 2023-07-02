@@ -88,18 +88,12 @@ func Format(sql string) (string, error) {
 									}
 									strBuilder.WriteString(field)
 								case *pg_query.Node_AConst:
-									switch val := v.AConst.Val.(type) {
-									case *pg_query.A_Const_Sval:
-										strBuilder.WriteString("\n")
-										strBuilder.WriteString("\t")
-										strBuilder.WriteString("'")
-										strBuilder.WriteString(val.Sval.Sval)
-										strBuilder.WriteString("'")
-									case *pg_query.A_Const_Ival:
-										strBuilder.WriteString("\n")
-										strBuilder.WriteString("\t")
-										strBuilder.WriteString(fmt.Sprint(val.Ival.Ival))
+									aconst, err := nodeformatter.FormatAConst(ctx, v)
+									if err != nil {
+										return "", err
 									}
+									strBuilder.WriteString("\n\t")
+									strBuilder.WriteString(aconst)
 								case *pg_query.Node_FuncCall:
 									funcName, err := nodeformatter.FormatFuncname(ctx, v)
 									if err != nil {
