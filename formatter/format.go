@@ -101,26 +101,13 @@ func Format(sql string) (string, error) {
 										strBuilder.WriteString(fmt.Sprint(val.Ival.Ival))
 									}
 								case *pg_query.Node_FuncCall:
-									for _, name := range v.FuncCall.Funcname {
-										if s, ok := name.Node.(*pg_query.Node_String_); ok {
-											if s.String_.Sval == "now" {
-												strBuilder.WriteString("\n")
-												strBuilder.WriteString("\t")
-												strBuilder.WriteString("NOW(")
-											}
-											if s.String_.Sval == "gen_random_uuid" {
-												strBuilder.WriteString("\n")
-												strBuilder.WriteString("\t")
-												strBuilder.WriteString("GEN_RANDOM_UUID(")
-											}
-											if s.String_.Sval == "current_setting" {
-												strBuilder.WriteString("\n")
-												strBuilder.WriteString("\t")
-												strBuilder.WriteString("CURRENT_SETTING")
-												strBuilder.WriteString("(")
-											}
-										}
+									res, err := nodeformatter.FormatFuncname(ctx, v)
+									if err != nil {
+										return "", err
 									}
+									strBuilder.WriteString("\n\t")
+									strBuilder.WriteString(res)
+
 									for argI, arg := range v.FuncCall.Args {
 										if argI != 0 {
 											strBuilder.WriteString(",")
@@ -223,13 +210,12 @@ func Format(sql string) (string, error) {
 									}
 								}
 							case *pg_query.Node_FuncCall:
-								for _, name := range n.FuncCall.Funcname {
-									if s, ok := name.Node.(*pg_query.Node_String_); ok {
-										if s.String_.Sval == "now" {
-											strBuilder.WriteString("NOW()")
-										}
-									}
+								res, err := nodeformatter.FormatFuncname(ctx, n)
+								if err != nil {
+									return "", err
 								}
+								strBuilder.WriteString(res)
+								strBuilder.WriteString(")")
 							}
 						}
 					}
@@ -280,30 +266,11 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 				for i := 0; i < indent; i++ {
 					bu.WriteString("\t")
 				}
-				for _, name := range n.FuncCall.Funcname {
-					if s, ok := name.Node.(*pg_query.Node_String_); ok {
-						if s.String_.Sval == "count" {
-							bu.WriteString("COUNT")
-							bu.WriteString("(*")
-						}
-						if s.String_.Sval == "current_setting" {
-							bu.WriteString("CURRENT_SETTING")
-							bu.WriteString("(")
-						}
-						if s.String_.Sval == "set_config" {
-							bu.WriteString("SET_CONFIG")
-							bu.WriteString("(")
-						}
-						if s.String_.Sval == "array_agg" {
-							bu.WriteString("ARRAY_AGG")
-							bu.WriteString("(")
-						}
-						if s.String_.Sval == "now" {
-							bu.WriteString("NOW")
-							bu.WriteString("(")
-						}
-					}
+				res, err := nodeformatter.FormatFuncname(ctx, n)
+				if err != nil {
+					return "", err
 				}
+				bu.WriteString(res)
 				for argI, arg := range n.FuncCall.Args {
 					if argI != 0 {
 						bu.WriteString(",")
@@ -479,14 +446,11 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 						for i := 0; i < indent; i++ {
 							bu.WriteString("\t")
 						}
-						for _, name := range n.FuncCall.Funcname {
-							if s, ok := name.Node.(*pg_query.Node_String_); ok {
-								if s.String_.Sval == "min" {
-									bu.WriteString("MIN")
-									bu.WriteString("(")
-								}
-							}
+						res, err := nodeformatter.FormatFuncname(ctx, n)
+						if err != nil {
+							return "", err
 						}
+						bu.WriteString(res)
 						for argI, arg := range n.FuncCall.Args {
 							if argI != 0 {
 								bu.WriteString(",")
