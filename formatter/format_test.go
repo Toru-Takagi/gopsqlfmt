@@ -368,6 +368,21 @@ INSERT INTO users(
 `,
 		},
 		{
+			name: "insert: primitive string",
+			sql:  `insert into users (user_name, user_age, created_at) values ('taro', 20, now())`,
+			want: `
+INSERT INTO users(
+	user_name,
+	user_age,
+	created_at
+) VALUES (
+	'taro',
+	20,
+	NOW()
+)
+`,
+		},
+		{
 			name: "insert from select",
 			sql: `
 				insert into deleted_users (user_uuid, user_name, user_age) select user_uuid, user_name, user_age from users where user_uuid = $1
