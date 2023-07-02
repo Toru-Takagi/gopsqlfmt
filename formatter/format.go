@@ -93,15 +93,49 @@ func Format(sql string) (string, error) {
 											if s.String_.Sval == "now" {
 												strBuilder.WriteString("\n")
 												strBuilder.WriteString("\t")
-												strBuilder.WriteString("NOW()")
+												strBuilder.WriteString("NOW(")
 											}
 											if s.String_.Sval == "gen_random_uuid" {
 												strBuilder.WriteString("\n")
 												strBuilder.WriteString("\t")
-												strBuilder.WriteString("GEN_RANDOM_UUID()")
+												strBuilder.WriteString("GEN_RANDOM_UUID(")
+											}
+											if s.String_.Sval == "current_setting" {
+												strBuilder.WriteString("\n")
+												strBuilder.WriteString("\t")
+												strBuilder.WriteString("CURRENT_SETTING")
+												strBuilder.WriteString("(")
 											}
 										}
 									}
+									for argI, arg := range v.FuncCall.Args {
+										if argI != 0 {
+											strBuilder.WriteString(",")
+											strBuilder.WriteString(" ")
+										}
+										if a, ok := arg.Node.(*pg_query.Node_AConst); ok {
+											res, err := nodeformatter.FormatAConst(ctx, a)
+											if err != nil {
+												return "", err
+											}
+											strBuilder.WriteString(res)
+										}
+										if paramRef, ok := arg.Node.(*pg_query.Node_ParamRef); ok {
+											strBuilder.WriteString("$")
+											strBuilder.WriteString(fmt.Sprint(paramRef.ParamRef.Number))
+										}
+										if cRef, ok := arg.Node.(*pg_query.Node_ColumnRef); ok {
+											for fi, f := range cRef.ColumnRef.Fields {
+												if s, ok := f.Node.(*pg_query.Node_String_); ok {
+													if fi != 0 {
+														strBuilder.WriteString(".")
+													}
+													strBuilder.WriteString(s.String_.Sval)
+												}
+											}
+										}
+									}
+									strBuilder.WriteString(")")
 								}
 							}
 						}

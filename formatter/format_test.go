@@ -398,6 +398,17 @@ INSERT INTO users(
 )
 `,
 		},
+		{
+			name: "insert: current_setting",
+			sql:  `insert into users (tenant_name_id) values (current_setting('tenant_name_id'))`,
+			want: `
+INSERT INTO users(
+	tenant_name_id
+) VALUES (
+	CURRENT_SETTING('tenant_name_id')
+)
+`,
+		},
 	}
 
 	for _, tt := range tests {
