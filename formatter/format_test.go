@@ -385,17 +385,19 @@ INSERT INTO users(
 		{
 			name: "insert from select",
 			sql: `
-				insert into deleted_users (user_uuid, user_name, user_age) select user_uuid, user_name, user_age from users where user_uuid = $1
+				insert into deleted_users (user_uuid, user_name, user_age, registered_at) select user_uuid, user_name, user_age, now() from users where user_uuid = $1
 			`,
 			want: `
 INSERT INTO deleted_users(
 	user_uuid,
 	user_name,
-	user_age
+	user_age,
+	registered_at
 ) SELECT
 	user_uuid,
 	user_name,
-	user_age
+	user_age,
+	NOW()
 FROM users
 WHERE user_uuid = $1
 `,

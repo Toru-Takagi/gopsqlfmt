@@ -298,6 +298,10 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 							bu.WriteString("ARRAY_AGG")
 							bu.WriteString("(")
 						}
+						if s.String_.Sval == "now" {
+							bu.WriteString("NOW")
+							bu.WriteString("(")
+						}
 					}
 				}
 				for argI, arg := range n.FuncCall.Args {
