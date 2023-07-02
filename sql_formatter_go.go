@@ -76,7 +76,7 @@ func formatFile(path string) error {
 							trimSQL := re.ReplaceAllString(strings.Trim(basicList.Value, "`"), "$1")
 							trimSQL = strings.TrimSpace(trimSQL)
 							upperSQL := strings.ToUpper(trimSQL)
-							if strings.HasPrefix(upperSQL, "SELECT") || strings.HasPrefix(upperSQL, "INSERT") || strings.HasPrefix(upperSQL, "UPDATE") {
+							if strings.HasPrefix(upperSQL, "SELECT") || strings.HasPrefix(upperSQL, "INSERT") || strings.HasPrefix(upperSQL, "UPDATE") || strings.HasPrefix(upperSQL, "DELETE") {
 								result, err := formatter.Format(trimSQL)
 								if err != nil {
 									exit(err)

@@ -42,11 +42,12 @@ func Format(sql string) (string, error) {
 			strBuilder.WriteString("INSERT INTO")
 
 			// output table name
-			if stmt.InsertStmt.Relation != nil {
-				strBuilder.WriteString(" ")
-				strBuilder.WriteString(stmt.InsertStmt.Relation.Relname)
-				strBuilder.WriteString("(")
+			tableName, err := nodeformatter.FormatRelation(ctx, stmt.InsertStmt.Relation)
+			if err != nil {
+				return "", err
 			}
+			strBuilder.WriteString(tableName)
+			strBuilder.WriteString("(")
 
 			// output column name
 			for i, col := range stmt.InsertStmt.Cols {
@@ -191,10 +192,11 @@ func Format(sql string) (string, error) {
 			strBuilder.WriteString("UPDATE")
 
 			// output table name
-			if stmt.UpdateStmt.Relation != nil {
-				strBuilder.WriteString(" ")
-				strBuilder.WriteString(stmt.UpdateStmt.Relation.Relname)
+			tableName, err := nodeformatter.FormatRelation(ctx, stmt.UpdateStmt.Relation)
+			if err != nil {
+				return "", err
 			}
+			strBuilder.WriteString(tableName)
 
 			strBuilder.WriteString("\n")
 			strBuilder.WriteString("SET")
@@ -256,10 +258,11 @@ func Format(sql string) (string, error) {
 			strBuilder.WriteString("DELETE FROM")
 
 			// output table name
-			if stmt.DeleteStmt.Relation != nil {
-				strBuilder.WriteString(" ")
-				strBuilder.WriteString(stmt.DeleteStmt.Relation.Relname)
+			tableName, err := nodeformatter.FormatRelation(ctx, stmt.DeleteStmt.Relation)
+			if err != nil {
+				return "", err
 			}
+			strBuilder.WriteString(tableName)
 
 			// output where clause
 			if stmt.DeleteStmt.WhereClause != nil {
