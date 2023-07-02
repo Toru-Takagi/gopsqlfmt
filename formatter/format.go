@@ -280,12 +280,11 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 										bu.WriteString(s.String_.Sval)
 									}
 								}
-								switch sortBy.SortBy.SortbyDir {
-								case pg_query.SortByDir_SORTBY_ASC:
-									bu.WriteString(" ASC")
-								case pg_query.SortByDir_SORTBY_DESC:
-									bu.WriteString(" DESC")
+								sortBy, err := nodeformatter.FormatSortByDir(ctx, sortBy)
+								if err != nil {
+									return "", err
 								}
+								bu.WriteString(sortBy)
 							}
 						}
 					}
@@ -395,12 +394,12 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 								bu.WriteString(s.String_.Sval)
 							}
 						}
-						switch sortBy.SortBy.SortbyDir {
-						case pg_query.SortByDir_SORTBY_ASC:
-							bu.WriteString(" ASC")
-						case pg_query.SortByDir_SORTBY_DESC:
-							bu.WriteString(" DESC")
+
+						sortBy, err := nodeformatter.FormatSortByDir(ctx, sortBy)
+						if err != nil {
+							return "", err
 						}
+						bu.WriteString(sortBy)
 					case *pg_query.Node_FuncCall:
 						for i := 0; i < indent; i++ {
 							bu.WriteString("\t")
