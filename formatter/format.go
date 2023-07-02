@@ -82,11 +82,11 @@ func Format(sql string) (string, error) {
 								case *pg_query.Node_ColumnRef:
 									strBuilder.WriteString("\n")
 									strBuilder.WriteString("\t")
-									for _, f := range v.ColumnRef.Fields {
-										if s, ok := f.Node.(*pg_query.Node_String_); ok {
-											strBuilder.WriteString(s.String_.Sval)
-										}
+									field, err := nodeformatter.FormatColumnRefFields(ctx, v)
+									if err != nil {
+										return "", err
 									}
+									strBuilder.WriteString(field)
 								case *pg_query.Node_AConst:
 									switch val := v.AConst.Val.(type) {
 									case *pg_query.A_Const_Sval:
@@ -176,18 +176,11 @@ func Format(sql string) (string, error) {
 						if res.ResTarget.Val != nil {
 							switch n := res.ResTarget.Val.Node.(type) {
 							case *pg_query.Node_ColumnRef:
-								for fi, f := range n.ColumnRef.Fields {
-									if s, ok := f.Node.(*pg_query.Node_String_); ok {
-										if fi != 0 {
-											strBuilder.WriteString(".")
-										}
-										if s.String_.Sval == "excluded" {
-											strBuilder.WriteString("EXCLUDED")
-										} else {
-											strBuilder.WriteString(s.String_.Sval)
-										}
-									}
+								field, err := nodeformatter.FormatColumnRefFields(ctx, n)
+								if err != nil {
+									return "", err
 								}
+								strBuilder.WriteString(field)
 							case *pg_query.Node_FuncCall:
 								res, err := nodeformatter.FormatFuncname(ctx, n)
 								if err != nil {
@@ -227,19 +220,15 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 		if res, ok := node.Node.(*pg_query.Node_ResTarget); ok {
 			switch n := res.ResTarget.Val.Node.(type) {
 			case *pg_query.Node_ColumnRef:
-				for fi, f := range n.ColumnRef.Fields {
-					if s, ok := f.Node.(*pg_query.Node_String_); ok {
-						if fi == 0 {
-							bu.WriteString("\n\t")
-							for i := 0; i < indent; i++ {
-								bu.WriteString("\t")
-							}
-						} else {
-							bu.WriteString(".")
-						}
-						bu.WriteString(s.String_.Sval)
-					}
+				field, err := nodeformatter.FormatColumnRefFields(ctx, n)
+				if err != nil {
+					return "", err
 				}
+				bu.WriteString("\n\t")
+				for i := 0; i < indent; i++ {
+					bu.WriteString("\t")
+				}
+				bu.WriteString(field)
 			case *pg_query.Node_FuncCall:
 				bu.WriteString("\n\t")
 				for i := 0; i < indent; i++ {
@@ -272,14 +261,11 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 									bu.WriteString("\n")
 									bu.WriteString("\t")
 								}
-								for fi, f := range n.ColumnRef.Fields {
-									if s, ok := f.Node.(*pg_query.Node_String_); ok {
-										if fi != 0 {
-											bu.WriteString(".")
-										}
-										bu.WriteString(s.String_.Sval)
-									}
+								field, err := nodeformatter.FormatColumnRefFields(ctx, n)
+								if err != nil {
+									return "", err
 								}
+								bu.WriteString(field)
 								sortBy, err := nodeformatter.FormatSortByDir(ctx, sortBy)
 								if err != nil {
 									return "", err
@@ -357,14 +343,11 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 			bu.WriteString(" ")
 		}
 		if cRef, ok := gClause.Node.(*pg_query.Node_ColumnRef); ok {
-			for fi, f := range cRef.ColumnRef.Fields {
-				if s, ok := f.Node.(*pg_query.Node_String_); ok {
-					if fi != 0 {
-						bu.WriteString(".")
-					}
-					bu.WriteString(s.String_.Sval)
-				}
+			field, err := nodeformatter.FormatColumnRefFields(ctx, cRef)
+			if err != nil {
+				return "", err
 			}
+			bu.WriteString(field)
 		}
 	}
 
@@ -386,14 +369,11 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 							bu.WriteString("\n")
 							bu.WriteString("\t")
 						}
-						for fi, f := range n.ColumnRef.Fields {
-							if s, ok := f.Node.(*pg_query.Node_String_); ok {
-								if fi != 0 {
-									bu.WriteString(".")
-								}
-								bu.WriteString(s.String_.Sval)
-							}
+						field, err := nodeformatter.FormatColumnRefFields(ctx, n)
+						if err != nil {
+							return "", err
 						}
+						bu.WriteString(field)
 
 						sortBy, err := nodeformatter.FormatSortByDir(ctx, sortBy)
 						if err != nil {

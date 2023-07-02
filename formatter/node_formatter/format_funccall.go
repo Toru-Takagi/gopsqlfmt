@@ -63,14 +63,11 @@ func FormatFuncCallArgs(ctx context.Context, funcCall *pg_query.Node_FuncCall) (
 			bu.WriteString("$")
 			bu.WriteString(fmt.Sprint(n.ParamRef.Number))
 		case *pg_query.Node_ColumnRef:
-			for fi, f := range n.ColumnRef.Fields {
-				if s, ok := f.Node.(*pg_query.Node_String_); ok {
-					if fi != 0 {
-						bu.WriteString(".")
-					}
-					bu.WriteString(s.String_.Sval)
-				}
+			field, err := FormatColumnRefFields(ctx, n)
+			if err != nil {
+				return "", err
 			}
+			bu.WriteString(field)
 		}
 	}
 
