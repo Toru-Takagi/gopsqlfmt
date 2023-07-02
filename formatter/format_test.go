@@ -353,6 +353,21 @@ INSERT INTO users(
 `,
 		},
 		{
+			name: "insert: named parameter",
+			sql:  `insert into users (user_name, user_age, created_at) values (:user_name, :user_age, now())`,
+			want: `
+INSERT INTO users(
+	user_name,
+	user_age,
+	created_at
+) VALUES (
+	:user_name,
+	:user_age,
+	NOW()
+)
+`,
+		},
+		{
 			name: "insert from select",
 			sql: `
 				insert into deleted_users (user_uuid, user_name, user_age) select user_uuid, user_name, user_age from users where user_uuid = $1

@@ -79,6 +79,14 @@ func Format(sql string) (string, error) {
 									strBuilder.WriteString("\t")
 									strBuilder.WriteString("$")
 									strBuilder.WriteString(fmt.Sprint(v.ParamRef.Number))
+								case *pg_query.Node_ColumnRef:
+									strBuilder.WriteString("\n")
+									strBuilder.WriteString("\t")
+									for _, f := range v.ColumnRef.Fields {
+										if s, ok := f.Node.(*pg_query.Node_String_); ok {
+											strBuilder.WriteString(s.String_.Sval)
+										}
+									}
 								case *pg_query.Node_FuncCall:
 									for _, name := range v.FuncCall.Funcname {
 										if s, ok := name.Node.(*pg_query.Node_String_); ok {
