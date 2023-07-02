@@ -469,6 +469,18 @@ ON CONFLICT ON CONSTRAINT user_unique_key
 DO NOTHING
 `,
 		},
+		{
+			name: "simple update",
+			sql:  `update users set user_name = $1, user_age = $2, updated_at = now() where user_uuid = $3`,
+			want: `
+UPDATE users
+SET
+	user_name = $1,
+	user_age = $2,
+	updated_at = NOW()
+WHERE user_uuid = $3
+`,
+		},
 	}
 
 	for _, tt := range tests {

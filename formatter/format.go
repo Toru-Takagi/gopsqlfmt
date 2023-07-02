@@ -30,9 +30,9 @@ func Format(sql string) (string, error) {
 	var strBuilder strings.Builder
 	strBuilder.WriteString("\n")
 	for _, raw := range result.Stmts {
-		switch internal := raw.Stmt.Node.(type) {
+		switch stmt := raw.Stmt.Node.(type) {
 		case *pg_query.Node_SelectStmt:
-			res, err := FormatSelectStmt(ctx, internal, 0)
+			res, err := FormatSelectStmt(ctx, stmt, 0)
 			if err != nil {
 				return "", err
 			}
@@ -42,14 +42,14 @@ func Format(sql string) (string, error) {
 			strBuilder.WriteString("INSERT INTO")
 
 			// output table name
-			if internal.InsertStmt.Relation != nil {
+			if stmt.InsertStmt.Relation != nil {
 				strBuilder.WriteString(" ")
-				strBuilder.WriteString(internal.InsertStmt.Relation.Relname)
+				strBuilder.WriteString(stmt.InsertStmt.Relation.Relname)
 				strBuilder.WriteString("(")
 			}
 
 			// output column name
-			for i, col := range internal.InsertStmt.Cols {
+			for i, col := range stmt.InsertStmt.Cols {
 				if target, ok := col.Node.(*pg_query.Node_ResTarget); ok {
 					if i != 0 {
 						strBuilder.WriteString(",")
@@ -64,8 +64,8 @@ func Format(sql string) (string, error) {
 			strBuilder.WriteString(") ")
 
 			// output parameter
-			if internal.InsertStmt.SelectStmt != nil {
-				if sNode, ok := internal.InsertStmt.SelectStmt.Node.(*pg_query.Node_SelectStmt); ok {
+			if stmt.InsertStmt.SelectStmt != nil {
+				if sNode, ok := stmt.InsertStmt.SelectStmt.Node.(*pg_query.Node_SelectStmt); ok {
 					for _, value := range sNode.SelectStmt.ValuesLists {
 						strBuilder.WriteString("VALUES (")
 						if list, ok := value.Node.(*pg_query.Node_List); ok {
@@ -125,31 +125,31 @@ func Format(sql string) (string, error) {
 			}
 
 			// output on conflict
-			if internal.InsertStmt.OnConflictClause != nil {
+			if stmt.InsertStmt.OnConflictClause != nil {
 				strBuilder.WriteString("\n")
 				strBuilder.WriteString("ON CONFLICT")
-				if internal.InsertStmt.OnConflictClause.Infer != nil {
-					if len(internal.InsertStmt.OnConflictClause.Infer.IndexElems) > 0 {
+				if stmt.InsertStmt.OnConflictClause.Infer != nil {
+					if len(stmt.InsertStmt.OnConflictClause.Infer.IndexElems) > 0 {
 						strBuilder.WriteString("(")
 					}
-					for _, elm := range internal.InsertStmt.OnConflictClause.Infer.IndexElems {
+					for _, elm := range stmt.InsertStmt.OnConflictClause.Infer.IndexElems {
 						if idxElm, ok := elm.Node.(*pg_query.Node_IndexElem); ok {
 							strBuilder.WriteString(idxElm.IndexElem.Name)
 						}
 					}
-					if len(internal.InsertStmt.OnConflictClause.Infer.IndexElems) > 0 {
+					if len(stmt.InsertStmt.OnConflictClause.Infer.IndexElems) > 0 {
 						strBuilder.WriteString(")")
 					}
 
-					if internal.InsertStmt.OnConflictClause.Infer.Conname != "" {
+					if stmt.InsertStmt.OnConflictClause.Infer.Conname != "" {
 						strBuilder.WriteString(" ")
 						strBuilder.WriteString("ON CONSTRAINT")
 						strBuilder.WriteString(" ")
-						strBuilder.WriteString(internal.InsertStmt.OnConflictClause.Infer.Conname)
+						strBuilder.WriteString(stmt.InsertStmt.OnConflictClause.Infer.Conname)
 					}
 				}
 
-				switch internal.InsertStmt.OnConflictClause.Action {
+				switch stmt.InsertStmt.OnConflictClause.Action {
 				case pg_query.OnConflictAction_ONCONFLICT_NOTHING:
 					strBuilder.WriteString("\n")
 					strBuilder.WriteString("DO NOTHING")
@@ -157,7 +157,7 @@ func Format(sql string) (string, error) {
 					strBuilder.WriteString("\n")
 					strBuilder.WriteString("DO UPDATE SET")
 				}
-				for targetI, target := range internal.InsertStmt.OnConflictClause.TargetList {
+				for targetI, target := range stmt.InsertStmt.OnConflictClause.TargetList {
 					if res, ok := target.Node.(*pg_query.Node_ResTarget); ok {
 						if targetI != 0 {
 							strBuilder.WriteString(",")
@@ -186,6 +186,71 @@ func Format(sql string) (string, error) {
 						}
 					}
 				}
+			}
+		case *pg_query.Node_UpdateStmt:
+			strBuilder.WriteString("UPDATE")
+
+			// output table name
+			if stmt.UpdateStmt.Relation != nil {
+				strBuilder.WriteString(" ")
+				strBuilder.WriteString(stmt.UpdateStmt.Relation.Relname)
+			}
+
+			strBuilder.WriteString("\n")
+			strBuilder.WriteString("SET")
+
+			for targetI, target := range stmt.UpdateStmt.TargetList {
+				if res, ok := target.Node.(*pg_query.Node_ResTarget); ok {
+					if targetI != 0 {
+						strBuilder.WriteString(",")
+					}
+					strBuilder.WriteString("\n")
+					strBuilder.WriteString("\t")
+					strBuilder.WriteString(res.ResTarget.Name)
+					strBuilder.WriteString(" = ")
+
+					if res.ResTarget.Val != nil {
+						switch n := res.ResTarget.Val.Node.(type) {
+						case *pg_query.Node_ColumnRef:
+							field, err := nodeformatter.FormatColumnRefFields(ctx, n)
+							if err != nil {
+								return "", err
+							}
+							strBuilder.WriteString(field)
+						case *pg_query.Node_ParamRef:
+							strBuilder.WriteString("$")
+							strBuilder.WriteString(fmt.Sprint(n.ParamRef.Number))
+						case *pg_query.Node_FuncCall:
+							res, err := nodeformatter.FormatFuncname(ctx, n)
+							if err != nil {
+								return "", err
+							}
+							strBuilder.WriteString(res)
+							strBuilder.WriteString(")")
+						}
+					}
+				}
+			}
+
+			// output where clause
+			if stmt.UpdateStmt.WhereClause != nil {
+				var (
+					res string
+					err error
+				)
+				if n, ok := stmt.UpdateStmt.WhereClause.Node.(*pg_query.Node_AExpr); ok {
+					res, err = nodeformatter.FormatAExpr(ctx, n)
+				}
+				if nBoolExpr, ok := stmt.UpdateStmt.WhereClause.Node.(*pg_query.Node_BoolExpr); ok {
+					res, err = formatBoolExpr(ctx, nBoolExpr, 0)
+				}
+				if err != nil {
+					return "", err
+				}
+				strBuilder.WriteString("\n")
+				strBuilder.WriteString("WHERE")
+				strBuilder.WriteString(" ")
+				strBuilder.WriteString(res)
 			}
 		}
 	}

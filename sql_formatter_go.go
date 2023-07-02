@@ -75,7 +75,8 @@ func formatFile(path string) error {
 							re := regexp.MustCompile(`^"(.*)"$`)
 							trimSQL := re.ReplaceAllString(strings.Trim(basicList.Value, "`"), "$1")
 							trimSQL = strings.TrimSpace(trimSQL)
-							if strings.HasPrefix(strings.ToUpper(trimSQL), "SELECT") {
+							upperSQL := strings.ToUpper(trimSQL)
+							if strings.HasPrefix(upperSQL, "SELECT") || strings.HasPrefix(upperSQL, "INSERT") || strings.HasPrefix(upperSQL, "UPDATE") {
 								result, err := formatter.Format(trimSQL)
 								if err != nil {
 									exit(err)
