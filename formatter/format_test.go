@@ -1,6 +1,7 @@
 package formatter_test
 
 import (
+	"github.com/Toru-Takagi/sql_formatter_go/fmtconf"
 	"github.com/Toru-Takagi/sql_formatter_go/formatter"
 
 	"testing"
@@ -15,6 +16,7 @@ func TestFormat(t *testing.T) {
 	tests := []struct {
 		name string
 		sql  string
+		conf *fmtconf.Config
 		want string
 	}{
 		{
@@ -267,7 +269,8 @@ SELECT
 	u.user_name,
 	ull.last_login_at
 FROM users u
-INNER JOIN user_last_login ull ON u.user_uuid = ull.user_uuid
+INNER JOIN user_last_login ull
+	ON u.user_uuid = ull.user_uuid
 WHERE u.user_uuid = $1
 `,
 		},
@@ -285,9 +288,12 @@ SELECT
 	uage.user_age,
 	uadd.address
 FROM users u
-INNER JOIN user_last_login ull ON u.user_uuid = ull.user_uuid
-INNER JOIN user_age uage ON u.user_uuid = uage.user_uuid
-INNER JOIN user_address uadd ON u.user_uuid = uadd.user_uuid
+INNER JOIN user_last_login ull
+	ON u.user_uuid = ull.user_uuid
+INNER JOIN user_age uage
+	ON u.user_uuid = uage.user_uuid
+INNER JOIN user_address uadd
+	ON u.user_uuid = uadd.user_uuid
 WHERE u.user_uuid = $1
 `,
 		},
@@ -298,6 +304,31 @@ WHERE u.user_uuid = $1
 						left join user_age uage on u.user_uuid = uage.user_uuid
 						left join user_address uadd on u.user_uuid = uadd.user_uuid
 						where u.user_uuid = $1`,
+			want: `
+SELECT
+	u.user_name,
+	ull.last_login_at,
+	uage.user_age,
+	uadd.address
+FROM users u
+INNER JOIN user_last_login ull
+	ON u.user_uuid = ull.user_uuid
+LEFT JOIN user_age uage
+	ON u.user_uuid = uage.user_uuid
+LEFT JOIN user_address uadd
+	ON u.user_uuid = uadd.user_uuid
+WHERE u.user_uuid = $1
+`,
+		},
+		{
+			name: "JOIN_LINE_BREAK_OFF",
+			sql: `select u.user_name, ull.last_login_at, uage.user_age, uadd.address from users u
+						inner join user_last_login ull on u.user_uuid = ull.user_uuid
+						left join user_age uage on u.user_uuid = uage.user_uuid
+						left join user_address uadd on u.user_uuid = uadd.user_uuid
+						where u.user_uuid = $1`,
+
+			conf: fmtconf.NewDefaultConfig().WithJoinLineBreakOff(),
 			want: `
 SELECT
 	u.user_name,
@@ -319,7 +350,8 @@ SELECT
 	u.user_name,
 	ull.last_login_at
 FROM users u
-INNER JOIN user_last_login ull ON u.user_uuid = ull.user_uuid
+INNER JOIN user_last_login ull
+	ON u.user_uuid = ull.user_uuid
 	AND u.email = ull.email
 `,
 		},
@@ -504,7 +536,7 @@ WHERE locale = current_setting('locale')
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			actual, err := formatter.Format(tt.sql)
+			actual, err := formatter.Format(tt.sql, tt.conf)
 			assert.NoError(t, err)
 			t.Log(actual)
 			if diff := cmp.Diff(tt.want, actual); diff != "" {

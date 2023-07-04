@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/Toru-Takagi/sql_formatter_go/fmtconf"
 	nodeformatter "github.com/Toru-Takagi/sql_formatter_go/formatter/node_formatter"
 
 	pg_query "github.com/pganalyze/pg_query_go/v4"
@@ -15,8 +16,11 @@ const (
 	npMarkPrefix     = "ttpre_"
 )
 
-func Format(sql string) (string, error) {
+func Format(sql string, conf *fmtconf.Config) (string, error) {
 	ctx := context.Background()
+	if conf == nil {
+		conf = fmtconf.NewDefaultConfig()
+	}
 
 	// support named parameter
 	replacedSQL := strings.NewReplacer([]string{
@@ -32,7 +36,7 @@ func Format(sql string) (string, error) {
 	for _, raw := range result.Stmts {
 		switch stmt := raw.Stmt.Node.(type) {
 		case *pg_query.Node_SelectStmt:
-			res, err := FormatSelectStmt(ctx, stmt, 0)
+			res, err := FormatSelectStmt(ctx, stmt, 0, conf)
 			if err != nil {
 				return "", err
 			}
@@ -117,7 +121,7 @@ func Format(sql string) (string, error) {
 						strBuilder.WriteString(")")
 					}
 
-					res, err := FormatSelectStmt(ctx, sNode, 0)
+					res, err := FormatSelectStmt(ctx, sNode, 0, conf)
 					if err != nil {
 						return "", err
 					}
@@ -292,7 +296,7 @@ func Format(sql string) (string, error) {
 	}...).Replace(strBuilder.String()), nil
 }
 
-func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, indent int) (string, error) {
+func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, indent int, conf *fmtconf.Config) (string, error) {
 	if len(stmt.SelectStmt.TargetList) == 0 {
 		return "", nil
 	}
@@ -372,7 +376,7 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 				}
 			case *pg_query.Node_SubLink:
 				if selectStmt, ok := n.SubLink.Subselect.Node.(*pg_query.Node_SelectStmt); ok {
-					res, err := FormatSelectStmt(ctx, selectStmt, indent+2)
+					res, err := FormatSelectStmt(ctx, selectStmt, indent+2, conf)
 					if err != nil {
 						return "", err
 					}
@@ -392,7 +396,7 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 
 	// output table name
 	for _, node := range stmt.SelectStmt.FromClause {
-		res, err := FormatSelectStmtFromClause(ctx, node.Node, indent)
+		res, err := FormatSelectStmtFromClause(ctx, node.Node, indent, conf)
 		if err != nil {
 			return "", err
 		}
@@ -533,7 +537,7 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 	return bu.String(), nil
 }
 
-func FormatSelectStmtFromClause(ctx context.Context, node any, indent int) (string, error) {
+func FormatSelectStmtFromClause(ctx context.Context, node any, indent int, conf *fmtconf.Config) (string, error) {
 	var bu strings.Builder
 
 	formatTableName := func(ctx context.Context, n *pg_query.Node_RangeVar) (string, error) {
@@ -586,7 +590,7 @@ func FormatSelectStmtFromClause(ctx context.Context, node any, indent int) (stri
 			bu.WriteString(n.RangeFunction.Alias.Aliasname)
 		}
 	case *pg_query.Node_JoinExpr:
-		res, err := FormatSelectStmtFromClause(ctx, n.JoinExpr.Larg.Node, indent)
+		res, err := FormatSelectStmtFromClause(ctx, n.JoinExpr.Larg.Node, indent, conf)
 		if err != nil {
 			return "", nil
 		}
@@ -603,8 +607,16 @@ func FormatSelectStmtFromClause(ctx context.Context, node any, indent int) (stri
 			if err != nil {
 				return "", err
 			}
+
 			bu.WriteString(tableName)
-			bu.WriteString(" ON ")
+
+			if conf.Join.LineBreakType == fmtconf.JOIN_LINE_BREAK_ON_CLAUSE {
+				bu.WriteString("\n\t")
+			} else {
+				bu.WriteString(" ")
+			}
+			bu.WriteString("ON")
+			bu.WriteString(" ")
 		}
 
 		switch qualsNode := n.JoinExpr.Quals.Node.(type) {
