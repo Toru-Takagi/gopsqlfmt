@@ -259,7 +259,7 @@ FROM user u
 		},
 		{
 			name: "select with subquery",
-			sql:  `select u.user_uuid, (select ull.last_login_at, current_setting('test') from user_last_login ull where ull.user_uuid = u.user_uuid) as last_login_at from users u`,
+			sql:  `select u.user_uuid, (select ull.last_login_at, current_setting('test') from user_last_login ull where ull.user_uuid = u.user_uuid and u.email = :email) as last_login_at from users u`,
 			want: `
 SELECT
 	u.user_uuid,
@@ -269,6 +269,7 @@ SELECT
 			current_setting('test')
 		FROM user_last_login ull
 		WHERE ull.user_uuid = u.user_uuid
+			AND u.email = :email
 	) AS last_login_at
 FROM users u
 `,

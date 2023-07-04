@@ -413,7 +413,7 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 			res, err = nodeformatter.FormatAExpr(ctx, n, conf)
 		}
 		if nBoolExpr, ok := stmt.SelectStmt.WhereClause.Node.(*pg_query.Node_BoolExpr); ok {
-			res, err = formatBoolExpr(ctx, nBoolExpr, 0, conf)
+			res, err = formatBoolExpr(ctx, nBoolExpr, indent, conf)
 		}
 		if err != nil {
 			return "", err
