@@ -1,14 +1,26 @@
 package fmtconf
 
-type JoinConfigLineBreakType string
+type (
+	JoinConfigStartIndentType string
+	JoinConfigLineBreakType   string
+)
 
 const (
-	JOIN_LINE_BREAK_ON_CLAUSE JoinConfigLineBreakType = "ON_CLAUSE"
+	JOIN_START_INDENT_TYPE_NONE      JoinConfigStartIndentType = "NONE"
+	JOIN_START_INDENT_TYPE_ONE_SPACE JoinConfigStartIndentType = "ONE_SPACE"
+
 	JOIN_LINE_BREAK_OFF       JoinConfigLineBreakType = "OFF"
+	JOIN_LINE_BREAK_ON_CLAUSE JoinConfigLineBreakType = "ON_CLAUSE"
 )
 
 type JoinConfig struct {
-	LineBreakType JoinConfigLineBreakType
+	StartIndentType JoinConfigStartIndentType
+	LineBreakType   JoinConfigLineBreakType
+}
+
+func (c *Config) WithJoinStartIndentTypeNone() *Config {
+	c.Join.StartIndentType = JOIN_START_INDENT_TYPE_NONE
+	return c
 }
 
 func (c *Config) WithJoinLineBreakOff() *Config {

@@ -281,8 +281,8 @@ SELECT
 	u.user_name,
 	ull.last_login_at
 FROM users u
-INNER JOIN user_last_login ull
-	ON u.user_uuid = ull.user_uuid
+	INNER JOIN user_last_login ull
+		ON u.user_uuid = ull.user_uuid
 WHERE u.user_uuid = $1
 `,
 		},
@@ -300,12 +300,12 @@ SELECT
 	uage.user_age,
 	uadd.address
 FROM users u
-INNER JOIN user_last_login ull
-	ON u.user_uuid = ull.user_uuid
-INNER JOIN user_age uage
-	ON u.user_uuid = uage.user_uuid
-INNER JOIN user_address uadd
-	ON u.user_uuid = uadd.user_uuid
+	INNER JOIN user_last_login ull
+		ON u.user_uuid = ull.user_uuid
+	INNER JOIN user_age uage
+		ON u.user_uuid = uage.user_uuid
+	INNER JOIN user_address uadd
+		ON u.user_uuid = uadd.user_uuid
 WHERE u.user_uuid = $1
 `,
 		},
@@ -323,12 +323,12 @@ SELECT
 	uage.user_age,
 	uadd.address
 FROM users u
-INNER JOIN user_last_login ull
-	ON u.user_uuid = ull.user_uuid
-LEFT JOIN user_age uage
-	ON u.user_uuid = uage.user_uuid
-LEFT JOIN user_address uadd
-	ON u.user_uuid = uadd.user_uuid
+	INNER JOIN user_last_login ull
+		ON u.user_uuid = ull.user_uuid
+	LEFT JOIN user_age uage
+		ON u.user_uuid = uage.user_uuid
+	LEFT JOIN user_address uadd
+		ON u.user_uuid = uadd.user_uuid
 WHERE u.user_uuid = $1
 `,
 		},
@@ -339,7 +339,6 @@ WHERE u.user_uuid = $1
 						left join user_age uage on u.user_uuid = uage.user_uuid
 						left join user_address uadd on u.user_uuid = uadd.user_uuid
 						where u.user_uuid = $1`,
-
 			conf: fmtconf.NewDefaultConfig().WithJoinLineBreakOff(),
 			want: `
 SELECT
@@ -348,9 +347,33 @@ SELECT
 	uage.user_age,
 	uadd.address
 FROM users u
-INNER JOIN user_last_login ull ON u.user_uuid = ull.user_uuid
-LEFT JOIN user_age uage ON u.user_uuid = uage.user_uuid
-LEFT JOIN user_address uadd ON u.user_uuid = uadd.user_uuid
+	INNER JOIN user_last_login ull ON u.user_uuid = ull.user_uuid
+	LEFT JOIN user_age uage ON u.user_uuid = uage.user_uuid
+	LEFT JOIN user_address uadd ON u.user_uuid = uadd.user_uuid
+WHERE u.user_uuid = $1
+`,
+		},
+		{
+			name: "JOIN_START_INDENT_TYPE_NONE",
+			sql: `select u.user_name, ull.last_login_at, uage.user_age, uadd.address from users u
+						inner join user_last_login ull on u.user_uuid = ull.user_uuid
+						left join user_age uage on u.user_uuid = uage.user_uuid
+						left join user_address uadd on u.user_uuid = uadd.user_uuid
+						where u.user_uuid = $1`,
+			conf: fmtconf.NewDefaultConfig().WithJoinStartIndentTypeNone(),
+			want: `
+SELECT
+	u.user_name,
+	ull.last_login_at,
+	uage.user_age,
+	uadd.address
+FROM users u
+INNER JOIN user_last_login ull
+	ON u.user_uuid = ull.user_uuid
+LEFT JOIN user_age uage
+	ON u.user_uuid = uage.user_uuid
+LEFT JOIN user_address uadd
+	ON u.user_uuid = uadd.user_uuid
 WHERE u.user_uuid = $1
 `,
 		},
@@ -362,8 +385,8 @@ SELECT
 	u.user_name,
 	ull.last_login_at
 FROM users u
-INNER JOIN user_last_login ull
-	ON u.user_uuid = ull.user_uuid
+	INNER JOIN user_last_login ull
+		ON u.user_uuid = ull.user_uuid
 	AND u.email = ull.email
 `,
 		},

@@ -597,11 +597,17 @@ func FormatSelectStmtFromClause(ctx context.Context, node any, indent int, conf 
 		bu.WriteString(res)
 
 		if nRangeVar, ok := n.JoinExpr.Rarg.Node.(*pg_query.Node_RangeVar); ok {
+			if conf.Join.StartIndentType == fmtconf.JOIN_START_INDENT_TYPE_ONE_SPACE {
+				bu.WriteString("\n\t")
+			} else {
+				bu.WriteString("\n")
+			}
+
 			switch n.JoinExpr.Jointype {
 			case pg_query.JoinType_JOIN_INNER:
-				bu.WriteString("\nINNER JOIN ")
+				bu.WriteString("INNER JOIN ")
 			case pg_query.JoinType_JOIN_LEFT:
-				bu.WriteString("\nLEFT JOIN ")
+				bu.WriteString("LEFT JOIN ")
 			}
 			tableName, err := formatTableName(ctx, nRangeVar)
 			if err != nil {
@@ -612,6 +618,9 @@ func FormatSelectStmtFromClause(ctx context.Context, node any, indent int, conf 
 
 			if conf.Join.LineBreakType == fmtconf.JOIN_LINE_BREAK_ON_CLAUSE {
 				bu.WriteString("\n\t")
+				if conf.Join.StartIndentType == fmtconf.JOIN_START_INDENT_TYPE_ONE_SPACE {
+					bu.WriteString("\t")
+				}
 			} else {
 				bu.WriteString(" ")
 			}

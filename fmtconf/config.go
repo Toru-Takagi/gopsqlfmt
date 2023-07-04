@@ -11,7 +11,8 @@ func NewDefaultConfig() *Config {
 			FuncNameTypeCase: FUNC_NAME_TYPE_CASE_LOWER,
 		},
 		Join: JoinConfig{
-			LineBreakType: JOIN_LINE_BREAK_ON_CLAUSE,
+			StartIndentType: JOIN_START_INDENT_TYPE_ONE_SPACE,
+			LineBreakType:   JOIN_LINE_BREAK_ON_CLAUSE,
 		},
 	}
 }
