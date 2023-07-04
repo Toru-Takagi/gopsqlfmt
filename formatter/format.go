@@ -60,7 +60,7 @@ func Format(sql string, conf *fmtconf.Config) (string, error) {
 						strBuilder.WriteString(",")
 					}
 					strBuilder.WriteString("\n")
-					strBuilder.WriteString("\t")
+					strBuilder.WriteString(getIndent(conf))
 					strBuilder.WriteString(target.ResTarget.Name)
 				}
 			}
@@ -81,12 +81,12 @@ func Format(sql string, conf *fmtconf.Config) (string, error) {
 								switch v := item.Node.(type) {
 								case *pg_query.Node_ParamRef:
 									strBuilder.WriteString("\n")
-									strBuilder.WriteString("\t")
+									strBuilder.WriteString(getIndent(conf))
 									strBuilder.WriteString("$")
 									strBuilder.WriteString(fmt.Sprint(v.ParamRef.Number))
 								case *pg_query.Node_ColumnRef:
 									strBuilder.WriteString("\n")
-									strBuilder.WriteString("\t")
+									strBuilder.WriteString(getIndent(conf))
 									field, err := nodeformatter.FormatColumnRefFields(ctx, v)
 									if err != nil {
 										return "", err
@@ -97,14 +97,16 @@ func Format(sql string, conf *fmtconf.Config) (string, error) {
 									if err != nil {
 										return "", err
 									}
-									strBuilder.WriteString("\n\t")
+									strBuilder.WriteString("\n")
+									strBuilder.WriteString(getIndent(conf))
 									strBuilder.WriteString(aconst)
 								case *pg_query.Node_FuncCall:
 									funcName, err := nodeformatter.FormatFuncname(ctx, v, conf)
 									if err != nil {
 										return "", err
 									}
-									strBuilder.WriteString("\n\t")
+									strBuilder.WriteString("\n")
+									strBuilder.WriteString(getIndent(conf))
 									strBuilder.WriteString(funcName)
 
 									arg, err := nodeformatter.FormatFuncCallArgs(ctx, v)
@@ -168,7 +170,7 @@ func Format(sql string, conf *fmtconf.Config) (string, error) {
 							strBuilder.WriteString(",")
 						}
 						strBuilder.WriteString("\n")
-						strBuilder.WriteString("\t")
+						strBuilder.WriteString(getIndent(conf))
 						strBuilder.WriteString(res.ResTarget.Name)
 						strBuilder.WriteString(" = ")
 
@@ -211,7 +213,7 @@ func Format(sql string, conf *fmtconf.Config) (string, error) {
 						strBuilder.WriteString(",")
 					}
 					strBuilder.WriteString("\n")
-					strBuilder.WriteString("\t")
+					strBuilder.WriteString(getIndent(conf))
 					strBuilder.WriteString(res.ResTarget.Name)
 					strBuilder.WriteString(" = ")
 
@@ -303,7 +305,7 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 
 	var bu strings.Builder
 	for i := 0; i < indent; i++ {
-		bu.WriteString("\t")
+		bu.WriteString(getIndent(conf))
 	}
 	bu.WriteString("SELECT")
 
@@ -319,15 +321,17 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 				if err != nil {
 					return "", err
 				}
-				bu.WriteString("\n\t")
+				bu.WriteString("\n")
+				bu.WriteString(getIndent(conf))
 				for i := 0; i < indent; i++ {
-					bu.WriteString("\t")
+					bu.WriteString(getIndent(conf))
 				}
 				bu.WriteString(field)
 			case *pg_query.Node_FuncCall:
-				bu.WriteString("\n\t")
+				bu.WriteString("\n")
+				bu.WriteString(getIndent(conf))
 				for i := 0; i < indent; i++ {
-					bu.WriteString("\t")
+					bu.WriteString(getIndent(conf))
 				}
 				funcName, err := nodeformatter.FormatFuncname(ctx, n, conf)
 				if err != nil {
@@ -354,7 +358,7 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 								if sortI != 0 {
 									bu.WriteString(",")
 									bu.WriteString("\n")
-									bu.WriteString("\t")
+									bu.WriteString(getIndent(conf))
 								}
 								field, err := nodeformatter.FormatColumnRefFields(ctx, n)
 								if err != nil {
@@ -380,10 +384,12 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 					if err != nil {
 						return "", err
 					}
-					bu.WriteString("\n\t")
+					bu.WriteString("\n")
+					bu.WriteString(getIndent(conf))
 					bu.WriteString("(\n")
 					bu.WriteString(res)
-					bu.WriteString("\n\t")
+					bu.WriteString("\n")
+					bu.WriteString(getIndent(conf))
 					bu.WriteString(")")
 				}
 			}
@@ -420,7 +426,7 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 		}
 		bu.WriteString("\n")
 		for i := 0; i < indent; i++ {
-			bu.WriteString("\t")
+			bu.WriteString(getIndent(conf))
 		}
 		bu.WriteString("WHERE")
 		bu.WriteString(" ")
@@ -450,7 +456,7 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 	if stmt.SelectStmt.SortClause != nil {
 		bu.WriteString("\n")
 		for i := 0; i < indent; i++ {
-			bu.WriteString("\t")
+			bu.WriteString(getIndent(conf))
 		}
 		bu.WriteString("ORDER BY")
 		bu.WriteString(" ")
@@ -462,7 +468,7 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 						if sortI != 0 {
 							bu.WriteString(",")
 							bu.WriteString("\n")
-							bu.WriteString("\t")
+							bu.WriteString(getIndent(conf))
 						}
 						field, err := nodeformatter.FormatColumnRefFields(ctx, n)
 						if err != nil {
@@ -477,7 +483,7 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 						bu.WriteString(sortBy)
 					case *pg_query.Node_FuncCall:
 						for i := 0; i < indent; i++ {
-							bu.WriteString("\t")
+							bu.WriteString(getIndent(conf))
 						}
 						funcName, err := nodeformatter.FormatFuncname(ctx, n, conf)
 						if err != nil {
@@ -502,7 +508,7 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 	if stmt.SelectStmt.LimitCount != nil {
 		bu.WriteString("\n")
 		for i := 0; i < indent; i++ {
-			bu.WriteString("\t")
+			bu.WriteString(getIndent(conf))
 		}
 		bu.WriteString("LIMIT")
 		bu.WriteString(" ")
@@ -520,7 +526,7 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 		if locking, ok := clause.Node.(*pg_query.Node_LockingClause); ok {
 			bu.WriteString("\n")
 			for i := 0; i < indent; i++ {
-				bu.WriteString("\t")
+				bu.WriteString(getIndent(conf))
 			}
 			switch locking.LockingClause.Strength {
 			case pg_query.LockClauseStrength_LCS_FORUPDATE:
@@ -562,7 +568,7 @@ func FormatSelectStmtFromClause(ctx context.Context, node any, indent int, conf 
 		}
 		bu.WriteString("\n")
 		for i := 0; i < indent; i++ {
-			bu.WriteString("\t")
+			bu.WriteString(getIndent(conf))
 		}
 		bu.WriteString("FROM")
 		bu.WriteString(" ")
@@ -570,7 +576,7 @@ func FormatSelectStmtFromClause(ctx context.Context, node any, indent int, conf 
 	case *pg_query.Node_RangeFunction:
 		bu.WriteString("\n")
 		for i := 0; i < indent; i++ {
-			bu.WriteString("\t")
+			bu.WriteString(getIndent(conf))
 		}
 		bu.WriteString("FROM")
 		bu.WriteString(" ")
@@ -598,7 +604,8 @@ func FormatSelectStmtFromClause(ctx context.Context, node any, indent int, conf 
 
 		if nRangeVar, ok := n.JoinExpr.Rarg.Node.(*pg_query.Node_RangeVar); ok {
 			if conf.Join.StartIndentType == fmtconf.JOIN_START_INDENT_TYPE_ONE_SPACE {
-				bu.WriteString("\n\t")
+				bu.WriteString("\n")
+				bu.WriteString(getIndent(conf))
 			} else {
 				bu.WriteString("\n")
 			}
@@ -617,9 +624,10 @@ func FormatSelectStmtFromClause(ctx context.Context, node any, indent int, conf 
 			bu.WriteString(tableName)
 
 			if conf.Join.LineBreakType == fmtconf.JOIN_LINE_BREAK_ON_CLAUSE {
-				bu.WriteString("\n\t")
+				bu.WriteString("\n")
+				bu.WriteString(getIndent(conf))
 				if conf.Join.StartIndentType == fmtconf.JOIN_START_INDENT_TYPE_ONE_SPACE {
-					bu.WriteString("\t")
+					bu.WriteString(getIndent(conf))
 				}
 			} else {
 				bu.WriteString(" ")
@@ -645,4 +653,14 @@ func FormatSelectStmtFromClause(ctx context.Context, node any, indent int, conf 
 	}
 
 	return bu.String(), nil
+}
+
+func getIndent(conf *fmtconf.Config) string {
+	switch conf.IndentType {
+	case fmtconf.INDENT_TYPE_TAB:
+		return "\t"
+	case fmtconf.INDENT_TYPE_TWO_SPACES:
+		return "  "
+	}
+	return "	"
 }
