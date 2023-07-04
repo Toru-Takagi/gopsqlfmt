@@ -237,6 +237,18 @@ FROM pg_catalog.pg_tables t
 `,
 		},
 		{
+			name: "FUNC_NAME_TYPE_CASE_UPPER",
+			sql:  `select array_agg(user_uuid), now(), gen_random_uuid() from users`,
+			conf: fmtconf.NewDefaultConfig().WithFuncNameTypeCaseUpper(),
+			want: `
+SELECT
+	ARRAY_AGG(user_uuid),
+	NOW(),
+	GEN_RANDOM_UUID()
+FROM users
+`,
+		},
+		{
 			name: "reserved word: user",
 			sql:  "SELECT u.user_name FROM user u ",
 			want: `

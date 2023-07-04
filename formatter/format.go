@@ -100,7 +100,7 @@ func Format(sql string, conf *fmtconf.Config) (string, error) {
 									strBuilder.WriteString("\n\t")
 									strBuilder.WriteString(aconst)
 								case *pg_query.Node_FuncCall:
-									funcName, err := nodeformatter.FormatFuncname(ctx, v)
+									funcName, err := nodeformatter.FormatFuncname(ctx, v, conf)
 									if err != nil {
 										return "", err
 									}
@@ -181,7 +181,7 @@ func Format(sql string, conf *fmtconf.Config) (string, error) {
 								}
 								strBuilder.WriteString(field)
 							case *pg_query.Node_FuncCall:
-								res, err := nodeformatter.FormatFuncname(ctx, n)
+								res, err := nodeformatter.FormatFuncname(ctx, n, conf)
 								if err != nil {
 									return "", err
 								}
@@ -227,7 +227,7 @@ func Format(sql string, conf *fmtconf.Config) (string, error) {
 							strBuilder.WriteString("$")
 							strBuilder.WriteString(fmt.Sprint(n.ParamRef.Number))
 						case *pg_query.Node_FuncCall:
-							res, err := nodeformatter.FormatFuncname(ctx, n)
+							res, err := nodeformatter.FormatFuncname(ctx, n, conf)
 							if err != nil {
 								return "", err
 							}
@@ -245,10 +245,10 @@ func Format(sql string, conf *fmtconf.Config) (string, error) {
 					err error
 				)
 				if n, ok := stmt.UpdateStmt.WhereClause.Node.(*pg_query.Node_AExpr); ok {
-					res, err = nodeformatter.FormatAExpr(ctx, n)
+					res, err = nodeformatter.FormatAExpr(ctx, n, conf)
 				}
 				if nBoolExpr, ok := stmt.UpdateStmt.WhereClause.Node.(*pg_query.Node_BoolExpr); ok {
-					res, err = formatBoolExpr(ctx, nBoolExpr, 0)
+					res, err = formatBoolExpr(ctx, nBoolExpr, 0, conf)
 				}
 				if err != nil {
 					return "", err
@@ -275,10 +275,10 @@ func Format(sql string, conf *fmtconf.Config) (string, error) {
 					err error
 				)
 				if n, ok := stmt.DeleteStmt.WhereClause.Node.(*pg_query.Node_AExpr); ok {
-					res, err = nodeformatter.FormatAExpr(ctx, n)
+					res, err = nodeformatter.FormatAExpr(ctx, n, conf)
 				}
 				if nBoolExpr, ok := stmt.DeleteStmt.WhereClause.Node.(*pg_query.Node_BoolExpr); ok {
-					res, err = formatBoolExpr(ctx, nBoolExpr, 0)
+					res, err = formatBoolExpr(ctx, nBoolExpr, 0, conf)
 				}
 				if err != nil {
 					return "", err
@@ -329,7 +329,7 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 				for i := 0; i < indent; i++ {
 					bu.WriteString("\t")
 				}
-				funcName, err := nodeformatter.FormatFuncname(ctx, n)
+				funcName, err := nodeformatter.FormatFuncname(ctx, n, conf)
 				if err != nil {
 					return "", err
 				}
@@ -410,10 +410,10 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 			err error
 		)
 		if n, ok := stmt.SelectStmt.WhereClause.Node.(*pg_query.Node_AExpr); ok {
-			res, err = nodeformatter.FormatAExpr(ctx, n)
+			res, err = nodeformatter.FormatAExpr(ctx, n, conf)
 		}
 		if nBoolExpr, ok := stmt.SelectStmt.WhereClause.Node.(*pg_query.Node_BoolExpr); ok {
-			res, err = formatBoolExpr(ctx, nBoolExpr, 0)
+			res, err = formatBoolExpr(ctx, nBoolExpr, 0, conf)
 		}
 		if err != nil {
 			return "", err
@@ -479,7 +479,7 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 						for i := 0; i < indent; i++ {
 							bu.WriteString("\t")
 						}
-						funcName, err := nodeformatter.FormatFuncname(ctx, n)
+						funcName, err := nodeformatter.FormatFuncname(ctx, n, conf)
 						if err != nil {
 							return "", err
 						}
@@ -621,13 +621,13 @@ func FormatSelectStmtFromClause(ctx context.Context, node any, indent int, conf 
 
 		switch qualsNode := n.JoinExpr.Quals.Node.(type) {
 		case *pg_query.Node_AExpr:
-			res, err := nodeformatter.FormatAExpr(ctx, qualsNode)
+			res, err := nodeformatter.FormatAExpr(ctx, qualsNode, conf)
 			if err != nil {
 				return "", err
 			}
 			bu.WriteString(res)
 		case *pg_query.Node_BoolExpr:
-			res, err := formatBoolExpr(ctx, qualsNode, 0)
+			res, err := formatBoolExpr(ctx, qualsNode, 0, conf)
 			if err != nil {
 				return "", err
 			}

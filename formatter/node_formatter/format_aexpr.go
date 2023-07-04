@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/Toru-Takagi/sql_formatter_go/fmtconf"
 	pg_query "github.com/pganalyze/pg_query_go/v4"
 )
 
 // ex) user_uuid = $1
-func FormatAExpr(ctx context.Context, aeXpr *pg_query.Node_AExpr) (string, error) {
+func FormatAExpr(ctx context.Context, aeXpr *pg_query.Node_AExpr, conf *fmtconf.Config) (string, error) {
 	var bu strings.Builder
 
 	// output column name
@@ -57,7 +58,7 @@ func FormatAExpr(ctx context.Context, aeXpr *pg_query.Node_AExpr) (string, error
 		bu.WriteString(fmt.Sprint(rexprNode.ParamRef.Number))
 
 	case *pg_query.Node_FuncCall:
-		funcCall, err := FormatFuncname(ctx, rexprNode)
+		funcCall, err := FormatFuncname(ctx, rexprNode, conf)
 		if err != nil {
 			return "", err
 		}
