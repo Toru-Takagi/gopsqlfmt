@@ -15,26 +15,33 @@ func FormatFuncname(ctx context.Context, funcCall *pg_query.Node_FuncCall) (stri
 		if s, ok := name.Node.(*pg_query.Node_String_); ok {
 			switch s.String_.Sval {
 			case "now":
-				bu.WriteString("NOW")
+				// https://www.postgresql.org/docs/15/functions-datetime.html
+				bu.WriteString("now")
 				bu.WriteString("(")
 			case "count":
-				bu.WriteString("COUNT")
+				// https://www.postgresql.org/docs/15/functions-aggregate.html
+				bu.WriteString("count")
 				bu.WriteString("(")
 				bu.WriteString("*")
 			case "min":
-				bu.WriteString("MIN")
+				// https://www.postgresql.org/docs/15/functions-aggregate.html
+				bu.WriteString("min")
 				bu.WriteString("(")
 			case "gen_random_uuid":
-				bu.WriteString("GEN_RANDOM_UUID")
+				// https://www.postgresql.org/docs/15/functions-uuid.html
+				bu.WriteString("gen_random_uuid")
 				bu.WriteString("(")
 			case "current_setting":
-				bu.WriteString("CURRENT_SETTING")
+				// https://www.postgresql.org/docs/15/functions-admin.html#FUNCTIONS-ADMIN-SET
+				bu.WriteString("current_setting")
 				bu.WriteString("(")
 			case "set_config":
-				bu.WriteString("SET_CONFIG")
+				// https://www.postgresql.org/docs/15/functions-admin.html#FUNCTIONS-ADMIN-SET
+				bu.WriteString("set_config")
 				bu.WriteString("(")
 			case "array_agg":
-				bu.WriteString("ARRAY_AGG")
+				// https://www.postgresql.org/docs/15/functions-aggregate.html
+				bu.WriteString("array_agg")
 				bu.WriteString("(")
 			}
 		}

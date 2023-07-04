@@ -186,7 +186,7 @@ ORDER BY u.user_uuid DESC,
 SELECT
 	user_uuid
 FROM users u
-ORDER BY MIN(u.registered_at)
+ORDER BY min(u.registered_at)
 `,
 		},
 		{
@@ -194,7 +194,7 @@ ORDER BY MIN(u.registered_at)
 			sql:  `select count(*) from users u group by u.name, u.age`,
 			want: `
 SELECT
-	COUNT(*)
+	count(*)
 FROM users u
 GROUP BY u.name, u.age
 `,
@@ -214,7 +214,7 @@ FOR UPDATE SKIP LOCKED
 			sql:  `select current_setting('search_path') as search_path`,
 			want: `
 SELECT
-	CURRENT_SETTING('search_path') AS search_path
+	current_setting('search_path') AS search_path
 `,
 		},
 		{
@@ -222,7 +222,7 @@ SELECT
 			sql:  `select set_config('test', $1, false)`,
 			want: `
 SELECT
-	SET_CONFIG('test', $1, false)
+	set_config('test', $1, false)
 `,
 		},
 		{
@@ -230,7 +230,7 @@ SELECT
 			sql:  `select array_agg(t.tablename ORDER BY t.tablename) from pg_catalog.pg_tables AS t`,
 			want: `
 SELECT
-	ARRAY_AGG(t.tablename ORDER BY t.tablename)
+	array_agg(t.tablename ORDER BY t.tablename)
 FROM pg_catalog.pg_tables t
 `,
 		},
@@ -252,7 +252,7 @@ SELECT
 	(
 		SELECT
 			ull.last_login_at,
-			CURRENT_SETTING('test')
+			current_setting('test')
 		FROM user_last_login ull
 		WHERE ull.user_uuid = u.user_uuid
 	) AS last_login_at
@@ -328,7 +328,7 @@ INNER JOIN user_last_login ull ON u.user_uuid = ull.user_uuid
 			sql:  `select COUNT(*) OVER () AS total, user_uuid from users`,
 			want: `
 SELECT
-	COUNT(*) OVER() AS total,
+	count(*) OVER() AS total,
 	user_uuid
 FROM users
 `,
@@ -348,7 +348,7 @@ INSERT INTO users(
 	$1,
 	$2,
 	$3,
-	NOW()
+	now()
 )
 `,
 		},
@@ -363,7 +363,7 @@ INSERT INTO users(
 ) VALUES (
 	:user_name,
 	:user_age,
-	NOW()
+	now()
 )
 `,
 		},
@@ -378,7 +378,7 @@ INSERT INTO users(
 ) VALUES (
 	'taro',
 	20,
-	NOW()
+	now()
 )
 `,
 		},
@@ -397,7 +397,7 @@ INSERT INTO deleted_users(
 	user_uuid,
 	user_name,
 	user_age,
-	NOW()
+	now()
 FROM users
 WHERE user_uuid = $1
 `,
@@ -410,7 +410,7 @@ INSERT INTO users(
 	user_uuid,
 	user_name
 ) VALUES (
-	GEN_RANDOM_UUID(),
+	gen_random_uuid(),
 	$1
 )
 `,
@@ -422,7 +422,7 @@ INSERT INTO users(
 INSERT INTO users(
 	tenant_name_id
 ) VALUES (
-	CURRENT_SETTING('tenant_name_id')
+	current_setting('tenant_name_id')
 )
 `,
 		},
@@ -446,7 +446,7 @@ ON CONFLICT(user_uuid)
 DO UPDATE SET
 	user_name = EXCLUDED.user_name,
 	user_age = EXCLUDED.user_age,
-	updated_at = NOW()
+	updated_at = now()
 `,
 		},
 		{
@@ -477,7 +477,7 @@ UPDATE users
 SET
 	user_name = $1,
 	user_age = $2,
-	updated_at = NOW()
+	updated_at = now()
 WHERE user_uuid = $3
 `,
 		},
@@ -494,7 +494,7 @@ WHERE user_uuid = $1
 			sql:  `delete from users where locale = current_setting('locale')`,
 			want: `
 DELETE FROM users
-WHERE locale = CURRENT_SETTING('locale')
+WHERE locale = current_setting('locale')
 `,
 		},
 	}
