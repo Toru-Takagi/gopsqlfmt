@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Toru-Takagi/sql_formatter_go/fmtconf"
+	"github.com/Toru-Takagi/gopsqlfmt/fmtconf"
 	pg_query "github.com/pganalyze/pg_query_go/v4"
 )
 

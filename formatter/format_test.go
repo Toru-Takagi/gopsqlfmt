@@ -1,8 +1,8 @@
 package formatter_test
 
 import (
-	"github.com/Toru-Takagi/sql_formatter_go/fmtconf"
-	"github.com/Toru-Takagi/sql_formatter_go/formatter"
+	"github.com/Toru-Takagi/gopsqlfmt/fmtconf"
+	"github.com/Toru-Takagi/gopsqlfmt/formatter"
 
 	"testing"
 

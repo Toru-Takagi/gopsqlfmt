@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Toru-Takagi/sql_formatter_go/fmtconf"
-	nodeformatter "github.com/Toru-Takagi/sql_formatter_go/formatter/node_formatter"
+	"github.com/Toru-Takagi/gopsqlfmt/fmtconf"
+	nodeformatter "github.com/Toru-Takagi/gopsqlfmt/formatter/node_formatter"
 
 	pg_query "github.com/pganalyze/pg_query_go/v4"
 )

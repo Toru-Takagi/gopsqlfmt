@@ -9,7 +9,7 @@ import (
 	"io/ioutil"
 	"strings"
 
-	"github.com/Toru-Takagi/sql_formatter_go/formatter"
+	"github.com/Toru-Takagi/gopsqlfmt/formatter"
 	"golang.org/x/tools/go/analysis"
 )
 

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/Toru-Takagi/sql_formatter_go/formatter/enumconv"
+	"github.com/Toru-Takagi/gopsqlfmt/formatter/enumconv"
 	pg_query "github.com/pganalyze/pg_query_go/v4"
 	"github.com/stretchr/testify/assert"
 )

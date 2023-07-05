@@ -1,9 +1,9 @@
 package formatter
 
 import (
-	"github.com/Toru-Takagi/sql_formatter_go/fmtconf"
-	"github.com/Toru-Takagi/sql_formatter_go/formatter/enumconv"
-	nodeformatter "github.com/Toru-Takagi/sql_formatter_go/formatter/node_formatter"
+	"github.com/Toru-Takagi/gopsqlfmt/fmtconf"
+	"github.com/Toru-Takagi/gopsqlfmt/formatter/enumconv"
+	nodeformatter "github.com/Toru-Takagi/gopsqlfmt/formatter/node_formatter"
 
 	"context"
 	"errors"
