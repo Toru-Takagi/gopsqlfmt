@@ -1,5 +1,8 @@
 package main
 
-func main() {
-	sql_formatter_go_main()
-}
+import (
+	"github.com/Toru-Takagi/sql_formatter_go/analyzer"
+	"golang.org/x/tools/go/analysis/singlechecker"
+)
+
+func main() { singlechecker.Main(analyzer.FormatSQLAnalyzer) }
