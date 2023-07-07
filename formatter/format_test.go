@@ -237,6 +237,17 @@ FROM pg_catalog.pg_tables t
 `,
 		},
 		{
+			name: "COALESCE",
+			sql:  `SELECT name, salary, coalesce(bonus, 0) AS bonus FROM employees`,
+			want: `
+SELECT
+  name,
+  salary,
+  COALESCE(bonus, 0) AS bonus
+FROM employees
+`,
+		},
+		{
 			name: "FUNC_NAME_TYPE_CASE_UPPER",
 			sql:  `select array_agg(user_uuid), now(), gen_random_uuid() from users`,
 			conf: fmtconf.NewDefaultConfig().WithFuncNameTypeCaseUpper(),

@@ -392,6 +392,37 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 					bu.WriteString(getIndent(conf))
 					bu.WriteString(")")
 				}
+
+			case *pg_query.Node_CoalesceExpr:
+				bu.WriteString("\n")
+				bu.WriteString(getIndent(conf))
+				bu.WriteString("COALESCE")
+				bu.WriteString("(")
+
+				for argI, arg := range n.CoalesceExpr.Args {
+					fmt.Println(argI)
+					if argI != 0 {
+						bu.WriteString(",")
+						bu.WriteString(" ")
+					}
+					switch n := arg.Node.(type) {
+					case *pg_query.Node_ColumnRef:
+						field, err := nodeformatter.FormatColumnRefFields(ctx, n)
+						if err != nil {
+							return "", err
+						}
+						bu.WriteString(field)
+					// TODO: support Node_Sublink
+					case *pg_query.Node_AConst:
+						aconst, err := nodeformatter.FormatAConst(ctx, n)
+						if err != nil {
+							return "", err
+						}
+						bu.WriteString(aconst)
+					}
+				}
+
+				bu.WriteString(")")
 			}
 			if res.ResTarget.Name != "" {
 				bu.WriteString(" AS ")

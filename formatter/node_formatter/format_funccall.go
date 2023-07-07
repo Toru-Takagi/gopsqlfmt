@@ -44,6 +44,9 @@ func FormatFuncname(ctx context.Context, funcCall *pg_query.Node_FuncCall, conf 
 				// https://www.postgresql.org/docs/15/functions-aggregate.html
 				bu.WriteString(convertFuncNameTypeCase("array_agg", "ARRAY_AGG", conf))
 				bu.WriteString("(")
+			case "json_agg":
+				bu.WriteString(convertFuncNameTypeCase("json_agg", "JSON_AGG", conf))
+				bu.WriteString("(")
 			}
 		}
 	}
