@@ -3,6 +3,7 @@ package formatter
 import (
 	"github.com/Toru-Takagi/gopsqlfmt/fmtconf"
 	"github.com/Toru-Takagi/gopsqlfmt/formatter/enumconv"
+	"github.com/Toru-Takagi/gopsqlfmt/formatter/internal"
 	nodeformatter "github.com/Toru-Takagi/gopsqlfmt/formatter/node_formatter"
 
 	"context"
@@ -25,7 +26,7 @@ func formatBoolExpr(ctx context.Context, be *pg_query.Node_BoolExpr, indent int,
 			if argI != 0 {
 				bu.WriteString("\n")
 				for i := 0; i <= indent; i++ {
-					bu.WriteString(getIndent(conf))
+					bu.WriteString(internal.GetIndent(conf))
 				}
 				boolStr, err := enumconv.BoolExprTypeToString(be.BoolExpr.Boolop)
 				if err != nil {
@@ -42,7 +43,7 @@ func formatBoolExpr(ctx context.Context, be *pg_query.Node_BoolExpr, indent int,
 			}
 			if argI != 0 {
 				bu.WriteString("\n")
-				bu.WriteString(getIndent(conf))
+				bu.WriteString(internal.GetIndent(conf))
 				boolStr, err := enumconv.BoolExprTypeToString(be.BoolExpr.Boolop)
 				if err != nil {
 					return "", err
@@ -52,11 +53,11 @@ func formatBoolExpr(ctx context.Context, be *pg_query.Node_BoolExpr, indent int,
 			bu.WriteString(" ")
 			bu.WriteString("(")
 			bu.WriteString("\n")
-			bu.WriteString(getIndent(conf))
-			bu.WriteString(getIndent(conf))
+			bu.WriteString(internal.GetIndent(conf))
+			bu.WriteString(internal.GetIndent(conf))
 			bu.WriteString(res)
 			bu.WriteString("\n")
-			bu.WriteString(getIndent(conf))
+			bu.WriteString(internal.GetIndent(conf))
 			bu.WriteString(")")
 		default:
 			return "", errors.New("formatBoolExpr: unknown node type")
