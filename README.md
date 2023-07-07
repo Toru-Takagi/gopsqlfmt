@@ -19,7 +19,8 @@ Format SQL strings in go files.
 ```go
 func main() {
 	const selectSQL = `select u.user_name, ull.last_login_at, uage.user_age, uadd.address   ,
-					array_agg(user_uuid), now(), gen_random_uuid() , json_agg(json_build_object('userUUID', gu.user_uuid, 'userName', gu.user_name)) as results,
+					array_agg(user_uuid), now(), gen_random_uuid() ,
+			  COALESCE(( SELECT json_agg(json_build_object('userUUID', gu.user_uuid, 'userName', gu.user_name)) AS results FROM gest_users gu), '[]') AS results,
 					(select ull.last_login_at, current_setting('test') from user_last_login ull where ull.user_uuid = u.user_uuid and u.email = :email) as last_login_at
 from users u
 						inner join user_last_login ull on u.user_uuid = ull.user_uuid
@@ -32,6 +33,7 @@ from users u
 								on conflict (user_uuid) do update set user_name = EXCLUDED.user_name, user_age = EXCLUDED.user_age, updated_at = now()
 	`
 }
+
 ```
 
 ### after
@@ -47,7 +49,11 @@ SELECT
   array_agg(user_uuid),
   now(),
   gen_random_uuid(),
-  ) AS results,
+  COALESCE((
+    SELECT
+      json_agg(json_build_object('userUUID', gu.user_uuid, 'userName', gu.user_name)) AS results
+    FROM gest_users gu
+  ), '[]') AS results,
   (
     SELECT
       ull.last_login_at,
