@@ -110,7 +110,7 @@ func Format(sql string, conf *fmtconf.Config) (string, error) {
 									strBuilder.WriteString(internal.GetIndent(conf))
 									strBuilder.WriteString(funcName)
 
-									arg, err := nodeformatter.FormatFuncCallArgs(ctx, v)
+									arg, err := nodeformatter.FormatFuncCallArgs(ctx, v, 0, conf)
 									if err != nil {
 										return "", err
 									}
@@ -340,7 +340,7 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 				}
 				bu.WriteString(funcName)
 
-				arg, err := nodeformatter.FormatFuncCallArgs(ctx, n)
+				arg, err := nodeformatter.FormatFuncCallArgs(ctx, n, indent+1, conf)
 				if err != nil {
 					return "", err
 				}
@@ -401,7 +401,6 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 				bu.WriteString("(")
 
 				for argI, arg := range n.CoalesceExpr.Args {
-					fmt.Println(argI)
 					if argI != 0 {
 						bu.WriteString(",")
 						bu.WriteString(" ")
@@ -413,7 +412,18 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 							return "", err
 						}
 						bu.WriteString(field)
-					// TODO: support Node_Sublink
+					case *pg_query.Node_SubLink:
+						if selectStmt, ok := n.SubLink.Subselect.Node.(*pg_query.Node_SelectStmt); ok {
+							res, err := FormatSelectStmt(ctx, selectStmt, indent+2, conf)
+							if err != nil {
+								return "", err
+							}
+							bu.WriteString("(\n")
+							bu.WriteString(res)
+							bu.WriteString("\n")
+							bu.WriteString(internal.GetIndent(conf))
+							bu.WriteString(")")
+						}
 					case *pg_query.Node_AConst:
 						aconst, err := nodeformatter.FormatAConst(ctx, n)
 						if err != nil {
@@ -523,7 +533,7 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 						}
 						bu.WriteString(funcName)
 
-						arg, err := nodeformatter.FormatFuncCallArgs(ctx, n)
+						arg, err := nodeformatter.FormatFuncCallArgs(ctx, n, indent, conf)
 						if err != nil {
 							return "", err
 						}

@@ -47,6 +47,9 @@ func FormatFuncname(ctx context.Context, funcCall *pg_query.Node_FuncCall, conf 
 			case "json_agg":
 				bu.WriteString(convertFuncNameTypeCase("json_agg", "JSON_AGG", conf))
 				bu.WriteString("(")
+			case "json_build_object":
+				bu.WriteString(convertFuncNameTypeCase("json_build_object", "JSON_BUILD_OBJECT", conf))
+				bu.WriteString("(")
 			}
 		}
 	}
@@ -64,7 +67,7 @@ func convertFuncNameTypeCase(lower, upper string, conf *fmtconf.Config) string {
 	return lower
 }
 
-func FormatFuncCallArgs(ctx context.Context, funcCall *pg_query.Node_FuncCall) (string, error) {
+func FormatFuncCallArgs(ctx context.Context, funcCall *pg_query.Node_FuncCall, indent int, conf *fmtconf.Config) (string, error) {
 	var bu strings.Builder
 
 	for argI, arg := range funcCall.FuncCall.Args {
@@ -89,6 +92,20 @@ func FormatFuncCallArgs(ctx context.Context, funcCall *pg_query.Node_FuncCall) (
 				return "", err
 			}
 			bu.WriteString(field)
+		case *pg_query.Node_FuncCall:
+			funcName, err := FormatFuncname(ctx, n, conf)
+			if err != nil {
+				return "", err
+			}
+			bu.WriteString(funcName)
+
+			arg, err := FormatFuncCallArgs(ctx, n, indent, conf)
+			if err != nil {
+				return "", err
+			}
+			bu.WriteString(arg)
+
+			bu.WriteString(")")
 		}
 	}
 

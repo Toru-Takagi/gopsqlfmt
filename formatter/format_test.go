@@ -248,6 +248,21 @@ FROM employees
 `,
 		},
 		{
+			name: "COALESCE_JSON_AGG",
+			sql: `select coalesce((
+            select json_agg(json_build_object('userUUID', gu.user_uuid, 'userName', gu.user_name)) as results from gest_users gu
+          ), '[]') as results from users u`,
+			want: `
+SELECT
+  COALESCE((
+    SELECT
+      json_agg(json_build_object('userUUID', gu.user_uuid, 'userName', gu.user_name)) AS results
+    FROM gest_users gu
+  ), '[]') AS results
+FROM users u
+`,
+		},
+		{
 			name: "FUNC_NAME_TYPE_CASE_UPPER",
 			sql:  `select array_agg(user_uuid), now(), gen_random_uuid() from users`,
 			conf: fmtconf.NewDefaultConfig().WithFuncNameTypeCaseUpper(),
