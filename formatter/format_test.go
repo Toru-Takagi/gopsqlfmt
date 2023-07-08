@@ -137,6 +137,21 @@ WHERE name != 'taro'
 `,
 		},
 		{
+			name: "exist",
+			sql:  `select user_uuid from users u where exists(select * from today_login_user tlu where u.user_uuid = tlu.user_uuid)`,
+			want: `
+SELECT
+  user_uuid
+FROM users u
+WHERE EXISTS(
+  SELECT
+    *
+  FROM today_login_user tlu
+  WHERE u.user_uuid = tlu.user_uuid
+)
+`,
+		},
+		{
 			name: "select with named parameter",
 			sql: `
 				select user_uuid, user_name from users where user_uuid = :user_uuid and user_email = :user_email

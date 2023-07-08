@@ -465,26 +465,58 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 
 	// output where clause
 	if stmt.SelectStmt.WhereClause != nil {
-		var (
-			res string
-			err error
-		)
-		if n, ok := stmt.SelectStmt.WhereClause.Node.(*pg_query.Node_AExpr); ok {
-			res, err = nodeformatter.FormatAExpr(ctx, n, conf)
+		switch n := stmt.SelectStmt.WhereClause.Node.(type) {
+		case *pg_query.Node_AExpr:
+			res, err := nodeformatter.FormatAExpr(ctx, n, conf)
+			if err != nil {
+				return "", err
+			}
+			bu.WriteString("\n")
+			for i := 0; i < indent; i++ {
+				bu.WriteString(internal.GetIndent(conf))
+			}
+			bu.WriteString("WHERE")
+			bu.WriteString(" ")
+			bu.WriteString(res)
+		case *pg_query.Node_BoolExpr:
+			res, err := formatBoolExpr(ctx, n, indent, conf)
+			if err != nil {
+				return "", err
+			}
+			bu.WriteString("\n")
+			for i := 0; i < indent; i++ {
+				bu.WriteString(internal.GetIndent(conf))
+			}
+			bu.WriteString("WHERE")
+			bu.WriteString(" ")
+			bu.WriteString(res)
+		case *pg_query.Node_SubLink:
+			if selectStmt, ok := n.SubLink.Subselect.Node.(*pg_query.Node_SelectStmt); ok {
+				res, err := FormatSelectStmt(ctx, selectStmt, indent+1, conf)
+				if err != nil {
+					return "", err
+				}
+
+				bu.WriteString("\n")
+				for i := 0; i < indent; i++ {
+					bu.WriteString(internal.GetIndent(conf))
+				}
+				bu.WriteString("WHERE")
+				bu.WriteString(" ")
+
+				switch n.SubLink.SubLinkType {
+				case pg_query.SubLinkType_ARRAY_SUBLINK:
+					bu.WriteString("ARRAY")
+				case pg_query.SubLinkType_EXISTS_SUBLINK:
+					bu.WriteString("EXISTS")
+				}
+
+				bu.WriteString("(\n")
+				bu.WriteString(res)
+				bu.WriteString("\n")
+				bu.WriteString(")")
+			}
 		}
-		if nBoolExpr, ok := stmt.SelectStmt.WhereClause.Node.(*pg_query.Node_BoolExpr); ok {
-			res, err = formatBoolExpr(ctx, nBoolExpr, indent, conf)
-		}
-		if err != nil {
-			return "", err
-		}
-		bu.WriteString("\n")
-		for i := 0; i < indent; i++ {
-			bu.WriteString(internal.GetIndent(conf))
-		}
-		bu.WriteString("WHERE")
-		bu.WriteString(" ")
-		bu.WriteString(res)
 	}
 
 	// output group clause
