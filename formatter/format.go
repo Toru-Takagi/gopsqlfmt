@@ -713,7 +713,20 @@ func FormatSelectStmtFromClause(ctx context.Context, node any, indent int, conf 
 			}
 
 			bu.WriteString(tableName)
+		}
 
+		for _, u := range n.JoinExpr.UsingClause {
+			bu.WriteString(" ")
+			bu.WriteString("USING")
+			bu.WriteString("(")
+			switch n := u.Node.(type) {
+			case *pg_query.Node_String_:
+				bu.WriteString(n.String_.Sval)
+			}
+			bu.WriteString(")")
+		}
+
+		if n.JoinExpr.Quals != nil {
 			if conf.Join.LineBreakType == fmtconf.JOIN_LINE_BREAK_ON_CLAUSE {
 				bu.WriteString("\n")
 				bu.WriteString(internal.GetIndent(conf))
@@ -723,23 +736,24 @@ func FormatSelectStmtFromClause(ctx context.Context, node any, indent int, conf 
 			} else {
 				bu.WriteString(" ")
 			}
+
 			bu.WriteString("ON")
 			bu.WriteString(" ")
-		}
 
-		switch qualsNode := n.JoinExpr.Quals.Node.(type) {
-		case *pg_query.Node_AExpr:
-			res, err := nodeformatter.FormatAExpr(ctx, qualsNode, conf)
-			if err != nil {
-				return "", err
+			switch qualsNode := n.JoinExpr.Quals.Node.(type) {
+			case *pg_query.Node_AExpr:
+				res, err := nodeformatter.FormatAExpr(ctx, qualsNode, conf)
+				if err != nil {
+					return "", err
+				}
+				bu.WriteString(res)
+			case *pg_query.Node_BoolExpr:
+				res, err := formatBoolExpr(ctx, qualsNode, 0, conf)
+				if err != nil {
+					return "", err
+				}
+				bu.WriteString(res)
 			}
-			bu.WriteString(res)
-		case *pg_query.Node_BoolExpr:
-			res, err := formatBoolExpr(ctx, qualsNode, 0, conf)
-			if err != nil {
-				return "", err
-			}
-			bu.WriteString(res)
 		}
 	}
 

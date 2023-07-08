@@ -108,6 +108,18 @@ WHERE user_uuid = $1
 `,
 		},
 		{
+			name: "JOIN_USING",
+			sql:  `SELECT orders.order_id, customers.customer_name, orders.total_amount FROM orders JOIN customers USING (customer_id)`,
+			want: `
+SELECT
+  orders.order_id,
+  customers.customer_name,
+  orders.total_amount
+FROM orders
+  INNER JOIN customers USING(customer_id)
+`,
+		},
+		{
 			name: "select sql with where and, or multiple columns",
 			sql: `
 							SELECT user_uuid, user_name
