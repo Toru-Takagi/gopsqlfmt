@@ -1,6 +1,7 @@
 # gopsqlfmt
 
-Format SQL strings in go files.
+gopsqlfmt is a tool to format SQL strings declared in const in go files.  
+It supports Analyzer.  
 
 # install command
 
@@ -12,7 +13,7 @@ Format SQL strings in go files.
 1. `$ cd [your go project root]`
 2. `$ gopsqlfmt ./...`
 
-# Sample
+# Example
 
 ### before
 
@@ -88,4 +89,21 @@ DO UPDATE SET
   updated_at = now()
 `
 }
+```
+
+# Config
+
+You can write the format settings in a file named `.gopsqlfmt.yaml`.  
+If the configuration file does not exist, the default configuration will be applied.  
+Please place .gopsqlfmt.yaml in the directory where you run gopsqlfmt.  
+
+
+```yaml
+format-settings:
+  indent-type: "TAB" #default: TWO_SPACES
+  func:
+    name-type-case: "UPPERCASE" # default: LOWERCASE
+  join:
+    start-indent-type: "NONE" # default: ONE_SPACE
+    line-break-type: "OFF" # default: ON_CLAUSE
 ```

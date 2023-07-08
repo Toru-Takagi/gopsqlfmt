@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"strings"
 
+	"github.com/Toru-Takagi/gopsqlfmt/fmtconf"
 	"github.com/Toru-Takagi/gopsqlfmt/formatter"
 	"golang.org/x/tools/go/analysis"
 )
@@ -20,6 +21,11 @@ var FormatSQLAnalyzer = &analysis.Analyzer{
 }
 
 func formatSQLRun(pass *analysis.Pass) (interface{}, error) {
+	conf, err := fmtconf.LoadYamlConfig()
+	if err != nil {
+		return nil, err
+	}
+
 	for _, astFile := range pass.Files {
 		var formatErr error
 		isFormatted := false
@@ -49,7 +55,7 @@ func formatSQLRun(pass *analysis.Pass) (interface{}, error) {
 								}...).Replace(basicList.Value))
 								upperSQL := strings.ToUpper(trimSQL)
 								if strings.HasPrefix(upperSQL, "SELECT") || strings.HasPrefix(upperSQL, "INSERT") || strings.HasPrefix(upperSQL, "UPDATE") || strings.HasPrefix(upperSQL, "DELETE") {
-									result, err := formatter.Format(trimSQL, nil)
+									result, err := formatter.Format(trimSQL, conf)
 									if err != nil {
 										formatErr = err
 										return false
