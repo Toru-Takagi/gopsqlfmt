@@ -298,6 +298,26 @@ FROM user u
 `,
 		},
 		{
+			name: "ANY_string param",
+			sql:  `select user_name from users where user_uuid = any('{72c6b8e0-c2f1-4fdd-835a-253fe92cbbd6}'::uuid[])`,
+			want: `
+SELECT
+  user_name
+FROM users
+WHERE user_uuid = ANY('{72c6b8e0-c2f1-4fdd-835a-253fe92cbbd6}'::uuid[])
+`,
+		},
+		{
+			name: "ANY_named paramter",
+			sql:  `select user_name from users where user_uuid = ANY(:user_uuids::uuid[])`,
+			want: `
+SELECT
+  user_name
+FROM users
+WHERE user_uuid = ANY(:user_uuids::uuid[])
+`,
+		},
+		{
 			name: "select with subquery",
 			sql:  `select u.user_uuid, (select ull.last_login_at, current_setting('test') from user_last_login ull where ull.user_uuid = u.user_uuid and u.email = :email) as last_login_at from users u`,
 			want: `

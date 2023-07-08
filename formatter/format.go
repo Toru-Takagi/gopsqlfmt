@@ -13,7 +13,9 @@ import (
 )
 
 const (
+	castParamPrefix  = "::"
 	namedParamPrefix = ":"
+	cpMarkPrefix     = "castpre_"
 	npMarkPrefix     = "ttpre_"
 )
 
@@ -25,8 +27,12 @@ func Format(sql string, conf *fmtconf.Config) (string, error) {
 
 	// support named parameter
 	replacedSQL := strings.NewReplacer([]string{
+		castParamPrefix, cpMarkPrefix,
 		namedParamPrefix, npMarkPrefix,
 	}...).Replace(sql)
+	replacedSQL = strings.NewReplacer([]string{
+		cpMarkPrefix, castParamPrefix,
+	}...).Replace(replacedSQL)
 
 	result, err := pg_query.Parse(replacedSQL)
 	if err != nil {
