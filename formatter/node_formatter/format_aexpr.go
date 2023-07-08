@@ -64,6 +64,7 @@ func FormatAExpr(ctx context.Context, aeXpr *pg_query.Node_AExpr, conf *fmtconf.
 		}
 		bu.WriteString(" ")
 		bu.WriteString(funcCall)
+		bu.WriteString("(")
 
 		arg, err := FormatFuncCallArgs(ctx, rexprNode, 0, conf)
 		if err != nil {

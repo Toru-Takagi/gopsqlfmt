@@ -115,6 +115,7 @@ func Format(sql string, conf *fmtconf.Config) (string, error) {
 									strBuilder.WriteString("\n")
 									strBuilder.WriteString(internal.GetIndent(conf))
 									strBuilder.WriteString(funcName)
+									strBuilder.WriteString("(")
 
 									arg, err := nodeformatter.FormatFuncCallArgs(ctx, v, 0, conf)
 									if err != nil {
@@ -195,6 +196,7 @@ func Format(sql string, conf *fmtconf.Config) (string, error) {
 									return "", err
 								}
 								strBuilder.WriteString(res)
+								strBuilder.WriteString("(")
 								strBuilder.WriteString(")")
 							}
 						}
@@ -241,6 +243,7 @@ func Format(sql string, conf *fmtconf.Config) (string, error) {
 								return "", err
 							}
 							strBuilder.WriteString(res)
+							strBuilder.WriteString("(")
 							strBuilder.WriteString(")")
 						}
 					}
@@ -345,6 +348,7 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 					return "", err
 				}
 				bu.WriteString(funcName)
+				bu.WriteString("(")
 
 				arg, err := nodeformatter.FormatFuncCallArgs(ctx, n, indent+1, conf)
 				if err != nil {
@@ -576,6 +580,7 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 							return "", err
 						}
 						bu.WriteString(funcName)
+						bu.WriteString("(")
 
 						arg, err := nodeformatter.FormatFuncCallArgs(ctx, n, indent, conf)
 						if err != nil {

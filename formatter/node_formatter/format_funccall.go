@@ -18,38 +18,28 @@ func FormatFuncname(ctx context.Context, funcCall *pg_query.Node_FuncCall, conf 
 			case "now":
 				// https://www.postgresql.org/docs/15/functions-datetime.html
 				bu.WriteString(convertFuncNameTypeCase("now", "NOW", conf))
-				bu.WriteString("(")
 			case "count":
 				// https://www.postgresql.org/docs/15/functions-aggregate.html
 				bu.WriteString(convertFuncNameTypeCase("count", "COUNT", conf))
-				bu.WriteString("(")
-				bu.WriteString("*")
 			case "min":
 				// https://www.postgresql.org/docs/15/functions-aggregate.html
 				bu.WriteString(convertFuncNameTypeCase("min", "MIN", conf))
-				bu.WriteString("(")
 			case "gen_random_uuid":
 				// https://www.postgresql.org/docs/15/functions-uuid.html
 				bu.WriteString(convertFuncNameTypeCase("gen_random_uuid", "GEN_RANDOM_UUID", conf))
-				bu.WriteString("(")
 			case "current_setting":
 				// https://www.postgresql.org/docs/15/functions-admin.html#FUNCTIONS-ADMIN-SET
 				bu.WriteString(convertFuncNameTypeCase("current_setting", "CURRENT_SETTING", conf))
-				bu.WriteString("(")
 			case "set_config":
 				// https://www.postgresql.org/docs/15/functions-admin.html#FUNCTIONS-ADMIN-SET
 				bu.WriteString(convertFuncNameTypeCase("set_config", "SET_CONFIG", conf))
-				bu.WriteString("(")
 			case "array_agg":
 				// https://www.postgresql.org/docs/15/functions-aggregate.html
 				bu.WriteString(convertFuncNameTypeCase("array_agg", "ARRAY_AGG", conf))
-				bu.WriteString("(")
 			case "json_agg":
 				bu.WriteString(convertFuncNameTypeCase("json_agg", "JSON_AGG", conf))
-				bu.WriteString("(")
 			case "json_build_object":
 				bu.WriteString(convertFuncNameTypeCase("json_build_object", "JSON_BUILD_OBJECT", conf))
-				bu.WriteString("(")
 			}
 		}
 	}
@@ -98,6 +88,7 @@ func FormatFuncCallArgs(ctx context.Context, funcCall *pg_query.Node_FuncCall, i
 				return "", err
 			}
 			bu.WriteString(funcName)
+			bu.WriteString("(")
 
 			arg, err := FormatFuncCallArgs(ctx, n, indent, conf)
 			if err != nil {
@@ -107,6 +98,10 @@ func FormatFuncCallArgs(ctx context.Context, funcCall *pg_query.Node_FuncCall, i
 
 			bu.WriteString(")")
 		}
+	}
+
+	if funcCall.FuncCall.AggStar {
+		bu.WriteString("*")
 	}
 
 	return bu.String(), nil
