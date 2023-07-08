@@ -263,6 +263,20 @@ FROM users u
 `,
 		},
 		{
+			name: "ARRAY",
+			sql:  `SELECT ARRAY(select user_uuid from users u WHERE u.user_uuid = $1) as user_uuids FROM login_users`,
+			want: `
+SELECT
+  ARRAY(
+    SELECT
+      user_uuid
+    FROM users u
+    WHERE u.user_uuid = $1
+  ) AS user_uuids
+FROM login_users
+`,
+		},
+		{
 			name: "FUNC_NAME_TYPE_CASE_UPPER",
 			sql:  `select array_agg(user_uuid), now(), gen_random_uuid() from users`,
 			conf: fmtconf.NewDefaultConfig().WithFuncNameTypeCaseUpper(),

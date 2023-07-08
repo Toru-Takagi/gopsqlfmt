@@ -387,6 +387,12 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 					}
 					bu.WriteString("\n")
 					bu.WriteString(internal.GetIndent(conf))
+
+					switch n.SubLink.SubLinkType {
+					case pg_query.SubLinkType_ARRAY_SUBLINK:
+						bu.WriteString("ARRAY")
+					}
+
 					bu.WriteString("(\n")
 					bu.WriteString(res)
 					bu.WriteString("\n")
