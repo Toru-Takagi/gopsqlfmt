@@ -7,7 +7,6 @@ import (
 	nodeformatter "github.com/Toru-Takagi/gopsqlfmt/formatter/node_formatter"
 
 	"context"
-	"errors"
 	"strings"
 
 	pg_query "github.com/pganalyze/pg_query_go/v4"
@@ -59,8 +58,33 @@ func formatBoolExpr(ctx context.Context, be *pg_query.Node_BoolExpr, indent int,
 			bu.WriteString("\n")
 			bu.WriteString(internal.GetIndent(conf))
 			bu.WriteString(")")
-		default:
-			return "", errors.New("formatBoolExpr: unknown node type")
+		case *pg_query.Node_SubLink:
+			if selectStmt, ok := n.SubLink.Subselect.Node.(*pg_query.Node_SelectStmt); ok {
+				res, err := FormatSelectStmt(ctx, selectStmt, indent+1, conf)
+				if err != nil {
+					return "", err
+				}
+
+				boolStr, err := enumconv.BoolExprTypeToString(be.BoolExpr.Boolop)
+				if err != nil {
+					return "", err
+				}
+				bu.WriteString(boolStr)
+				bu.WriteString(" ")
+
+				// TODO: Refactoring SubLinkType
+				switch n.SubLink.SubLinkType {
+				case pg_query.SubLinkType_ARRAY_SUBLINK:
+					bu.WriteString("ARRAY")
+				case pg_query.SubLinkType_EXISTS_SUBLINK:
+					bu.WriteString("EXISTS")
+				}
+
+				bu.WriteString("(\n")
+				bu.WriteString(res)
+				bu.WriteString("\n")
+				bu.WriteString(")")
+			}
 		}
 	}
 

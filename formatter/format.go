@@ -693,7 +693,8 @@ func FormatSelectStmtFromClause(ctx context.Context, node any, indent int, conf 
 		}
 		bu.WriteString(res)
 
-		if nRangeVar, ok := n.JoinExpr.Rarg.Node.(*pg_query.Node_RangeVar); ok {
+		switch nRarg := n.JoinExpr.Rarg.Node.(type) {
+		case *pg_query.Node_RangeVar:
 			if conf.Join.StartIndentType == fmtconf.JOIN_START_INDENT_TYPE_ONE_SPACE {
 				bu.WriteString("\n")
 				bu.WriteString(internal.GetIndent(conf))
@@ -707,12 +708,40 @@ func FormatSelectStmtFromClause(ctx context.Context, node any, indent int, conf 
 			case pg_query.JoinType_JOIN_LEFT:
 				bu.WriteString("LEFT JOIN ")
 			}
-			tableName, err := formatTableName(ctx, nRangeVar)
+			tableName, err := formatTableName(ctx, nRarg)
 			if err != nil {
 				return "", err
 			}
 
 			bu.WriteString(tableName)
+		case *pg_query.Node_RangeSubselect:
+			switch nSubquery := nRarg.RangeSubselect.Subquery.Node.(type) {
+			case *pg_query.Node_SelectStmt:
+				if conf.Join.StartIndentType == fmtconf.JOIN_START_INDENT_TYPE_ONE_SPACE {
+					bu.WriteString("\n")
+					bu.WriteString(internal.GetIndent(conf))
+				} else {
+					bu.WriteString("\n")
+				}
+
+				// TODO: Refactor Jointype
+				switch n.JoinExpr.Jointype {
+				case pg_query.JoinType_JOIN_INNER:
+					bu.WriteString("INNER JOIN ")
+				case pg_query.JoinType_JOIN_LEFT:
+					bu.WriteString("LEFT JOIN ")
+				}
+
+				bu.WriteString("(")
+				bu.WriteString("\n")
+
+				res, err := FormatSelectStmt(ctx, nSubquery, indent+2, conf)
+				if err != nil {
+					return "", err
+				}
+				bu.WriteString(res)
+			}
+			// TODO: Alias
 		}
 
 		for _, u := range n.JoinExpr.UsingClause {
