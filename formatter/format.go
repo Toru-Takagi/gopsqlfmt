@@ -399,10 +399,11 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 					bu.WriteString("\n")
 					bu.WriteString(internal.GetIndent(conf))
 
-					switch n.SubLink.SubLinkType {
-					case pg_query.SubLinkType_ARRAY_SUBLINK:
-						bu.WriteString("ARRAY")
+					slt, err := enumconv.SubLinkTypeToString(n.SubLink.SubLinkType)
+					if err != nil {
+						return "", err
 					}
+					bu.WriteString(slt)
 
 					bu.WriteString("(\n")
 					bu.WriteString(res)
@@ -509,12 +510,11 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 				bu.WriteString("WHERE")
 				bu.WriteString(" ")
 
-				switch n.SubLink.SubLinkType {
-				case pg_query.SubLinkType_ARRAY_SUBLINK:
-					bu.WriteString("ARRAY")
-				case pg_query.SubLinkType_EXISTS_SUBLINK:
-					bu.WriteString("EXISTS")
+				slt, err := enumconv.SubLinkTypeToString(n.SubLink.SubLinkType)
+				if err != nil {
+					return "", err
 				}
+				bu.WriteString(slt)
 
 				bu.WriteString("(\n")
 				bu.WriteString(res)

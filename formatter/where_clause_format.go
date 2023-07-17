@@ -72,13 +72,11 @@ func formatBoolExpr(ctx context.Context, be *pg_query.Node_BoolExpr, indent int,
 				bu.WriteString(boolStr)
 				bu.WriteString(" ")
 
-				// TODO: Refactoring SubLinkType
-				switch n.SubLink.SubLinkType {
-				case pg_query.SubLinkType_ARRAY_SUBLINK:
-					bu.WriteString("ARRAY")
-				case pg_query.SubLinkType_EXISTS_SUBLINK:
-					bu.WriteString("EXISTS")
+				sbt, err := enumconv.SubLinkTypeToString(n.SubLink.SubLinkType)
+				if err != nil {
+					return "", err
 				}
+				bu.WriteString(sbt)
 
 				bu.WriteString("(\n")
 				bu.WriteString(res)

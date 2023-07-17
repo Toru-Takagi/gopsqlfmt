@@ -35,3 +35,25 @@ func JoinTypeToString(jt pg_query.JoinType) (string, error) {
 	}
 	return "", errors.New("JoinTypeToString: unknown JoinType")
 }
+
+func SubLinkTypeToString(slt pg_query.SubLinkType) (string, error) {
+	switch slt {
+	case pg_query.SubLinkType_EXISTS_SUBLINK:
+		return "EXISTS", nil
+	case pg_query.SubLinkType_ALL_SUBLINK:
+		return "ALL", nil
+	case pg_query.SubLinkType_ANY_SUBLINK:
+		return "ANY", nil
+	case pg_query.SubLinkType_ROWCOMPARE_SUBLINK:
+		return "", nil
+	case pg_query.SubLinkType_EXPR_SUBLINK:
+		return "", nil
+	case pg_query.SubLinkType_MULTIEXPR_SUBLINK:
+		return "", nil
+	case pg_query.SubLinkType_ARRAY_SUBLINK:
+		return "ARRAY", nil
+	case pg_query.SubLinkType_CTE_SUBLINK:
+		return "", nil
+	}
+	return "", errors.New("SubLinkTypeToString: unknown SubLinkType")
+}
