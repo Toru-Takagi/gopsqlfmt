@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/Toru-Takagi/gopsqlfmt/fmtconf"
+	"github.com/Toru-Takagi/gopsqlfmt/formatter/enumconv"
 	"github.com/Toru-Takagi/gopsqlfmt/formatter/internal"
 	nodeformatter "github.com/Toru-Takagi/gopsqlfmt/formatter/node_formatter"
 
@@ -702,12 +703,13 @@ func FormatSelectStmtFromClause(ctx context.Context, node any, indent int, conf 
 				bu.WriteString("\n")
 			}
 
-			switch n.JoinExpr.Jointype {
-			case pg_query.JoinType_JOIN_INNER:
-				bu.WriteString("INNER JOIN ")
-			case pg_query.JoinType_JOIN_LEFT:
-				bu.WriteString("LEFT JOIN ")
+			jt, err := enumconv.JoinTypeToString(n.JoinExpr.Jointype)
+			if err != nil {
+				return "", err
 			}
+			bu.WriteString(jt)
+			bu.WriteString(" ")
+
 			tableName, err := formatTableName(ctx, nRarg)
 			if err != nil {
 				return "", err
@@ -724,13 +726,12 @@ func FormatSelectStmtFromClause(ctx context.Context, node any, indent int, conf 
 					bu.WriteString("\n")
 				}
 
-				// TODO: Refactor Jointype
-				switch n.JoinExpr.Jointype {
-				case pg_query.JoinType_JOIN_INNER:
-					bu.WriteString("INNER JOIN ")
-				case pg_query.JoinType_JOIN_LEFT:
-					bu.WriteString("LEFT JOIN ")
+				jt, err := enumconv.JoinTypeToString(n.JoinExpr.Jointype)
+				if err != nil {
+					return "", err
 				}
+				bu.WriteString(jt)
+				bu.WriteString(" ")
 
 				bu.WriteString("(")
 				bu.WriteString("\n")
