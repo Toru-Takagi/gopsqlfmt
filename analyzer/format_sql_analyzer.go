@@ -57,7 +57,7 @@ func formatSQLRun(pass *analysis.Pass) (interface{}, error) {
 								if strings.HasPrefix(upperSQL, "SELECT") || strings.HasPrefix(upperSQL, "INSERT") || strings.HasPrefix(upperSQL, "UPDATE") || strings.HasPrefix(upperSQL, "DELETE") {
 									result, err := formatter.Format(trimSQL, conf)
 									if err != nil {
-										formatErr = err
+										formatErr = fmt.Errorf("%s: %s\n%s", fname, err.Error(), trimSQL)
 										return false
 									}
 									basicList.Value = fmt.Sprintf("`%s`", result)
