@@ -305,6 +305,14 @@ FROM users u
 `,
 		},
 		{
+			name: "COALESCE_ARRAY_LENGTH",
+			sql:  `select coalesce(array_length(u.user_uuids, 1),0) as result_count from users u`,
+			want: `
+SELECT
+  COALESCE(array_length(u.user_uuids, 1), 0) AS result_count
+FROM users u
+`},
+		{
 			name: "ARRAY",
 			sql:  `SELECT ARRAY(select user_uuid from users u WHERE u.user_uuid = $1) as user_uuids FROM login_users`,
 			want: `

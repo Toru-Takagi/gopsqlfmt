@@ -448,6 +448,20 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 							return "", err
 						}
 						bu.WriteString(aconst)
+					case *pg_query.Node_FuncCall:
+						funcName, err := nodeformatter.FormatFuncname(ctx, n, conf)
+						if err != nil {
+							return "", err
+						}
+						bu.WriteString(funcName)
+						bu.WriteString("(")
+
+						arg, err := nodeformatter.FormatFuncCallArgs(ctx, n, indent+1, conf)
+						if err != nil {
+							return "", err
+						}
+						bu.WriteString(arg)
+						bu.WriteString(")")
 					}
 				}
 
