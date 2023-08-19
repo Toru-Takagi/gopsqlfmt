@@ -339,6 +339,15 @@ FROM users
 `,
 		},
 		{
+			name: "CARDINALITY",
+			sql:  `select cardinality(u.user_uuids) as user_count from users u`,
+			want: `
+SELECT
+  cardinality(u.user_uuids) AS user_count
+FROM users u
+`,
+		},
+		{
 			name: "reserved word: user",
 			sql:  "SELECT u.user_name FROM user u ",
 			want: `

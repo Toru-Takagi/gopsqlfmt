@@ -42,6 +42,8 @@ func FormatFuncname(ctx context.Context, funcCall *pg_query.Node_FuncCall, conf 
 				bu.WriteString(convertFuncNameTypeCase("json_build_object", "JSON_BUILD_OBJECT", conf))
 			case "array_length":
 				bu.WriteString(convertFuncNameTypeCase("array_length", "ARRAY_LENGTH", conf))
+			case "cardinality":
+				bu.WriteString(convertFuncNameTypeCase("cardinality", "CARDINALITY", conf))
 			}
 		}
 	}
