@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/Toru-Takagi/gopsqlfmt/fmtconf"
-	pg_query "github.com/pganalyze/pg_query_go/v4"
+	pg_query "github.com/pganalyze/pg_query_go/v5"
 )
 
 func FormatFuncname(ctx context.Context, funcCall *pg_query.Node_FuncCall, conf *fmtconf.Config) (string, error) {

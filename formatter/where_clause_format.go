@@ -9,7 +9,7 @@ import (
 	"context"
 	"strings"
 
-	pg_query "github.com/pganalyze/pg_query_go/v4"
+	pg_query "github.com/pganalyze/pg_query_go/v5"
 )
 
 func formatBoolExpr(ctx context.Context, be *pg_query.Node_BoolExpr, indent int, conf *fmtconf.Config) (string, error) {

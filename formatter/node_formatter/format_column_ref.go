@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	pg_query "github.com/pganalyze/pg_query_go/v4"
+	pg_query "github.com/pganalyze/pg_query_go/v5"
 )
 
 func FormatColumnRefFields(ctx context.Context, columnRef *pg_query.Node_ColumnRef) (string, error) {

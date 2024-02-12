@@ -10,7 +10,7 @@ import (
 	"github.com/Toru-Takagi/gopsqlfmt/formatter/internal"
 	nodeformatter "github.com/Toru-Takagi/gopsqlfmt/formatter/node_formatter"
 
-	pg_query "github.com/pganalyze/pg_query_go/v4"
+	pg_query "github.com/pganalyze/pg_query_go/v5"
 )
 
 const (
