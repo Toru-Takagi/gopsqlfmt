@@ -244,6 +244,15 @@ GROUP BY u.name, u.age
 `,
 		},
 		{
+			name: "SELECT_COUNT_DISTINCT",
+			sql:  `select count(distinct user_name) from users`,
+			want: `
+SELECT
+  count(DISTINCT user_name)
+FROM users
+`,
+		},
+		{
 			name: "FOR UPDATE SKIP LOCKED",
 			sql:  `select user_uuid from users for update skip locked`,
 			want: `

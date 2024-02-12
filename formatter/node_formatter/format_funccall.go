@@ -81,6 +81,10 @@ func FormatFuncCallArgs(ctx context.Context, funcCall *pg_query.Node_FuncCall, i
 			bu.WriteString("$")
 			bu.WriteString(fmt.Sprint(n.ParamRef.Number))
 		case *pg_query.Node_ColumnRef:
+			if funcCall.FuncCall.AggDistinct {
+				bu.WriteString("DISTINCT ")
+			}
+
 			field, err := FormatColumnRefFields(ctx, n)
 			if err != nil {
 				return "", err
