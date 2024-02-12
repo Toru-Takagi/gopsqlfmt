@@ -59,22 +59,27 @@ func Format(sql string, conf *fmtconf.Config) (string, error) {
 				return "", err
 			}
 			strBuilder.WriteString(tableName)
-			strBuilder.WriteString("(")
 
-			// output column name
-			for i, col := range stmt.InsertStmt.Cols {
-				if target, ok := col.Node.(*pg_query.Node_ResTarget); ok {
-					if i != 0 {
-						strBuilder.WriteString(",")
+			if len(stmt.InsertStmt.Cols) > 0 {
+				strBuilder.WriteString("(")
+
+				// output column name
+				for i, col := range stmt.InsertStmt.Cols {
+					if target, ok := col.Node.(*pg_query.Node_ResTarget); ok {
+						if i != 0 {
+							strBuilder.WriteString(",")
+						}
+						strBuilder.WriteString("\n")
+						strBuilder.WriteString(internal.GetIndent(conf))
+						strBuilder.WriteString(target.ResTarget.Name)
 					}
-					strBuilder.WriteString("\n")
-					strBuilder.WriteString(internal.GetIndent(conf))
-					strBuilder.WriteString(target.ResTarget.Name)
 				}
-			}
 
-			strBuilder.WriteString("\n")
-			strBuilder.WriteString(") ")
+				strBuilder.WriteString("\n")
+				strBuilder.WriteString(") ")
+			} else {
+				strBuilder.WriteString("\n")
+			}
 
 			// output parameter
 			if stmt.InsertStmt.SelectStmt != nil {

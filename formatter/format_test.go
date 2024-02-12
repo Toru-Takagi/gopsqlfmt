@@ -549,6 +549,17 @@ INSERT INTO users(
 `,
 		},
 		{
+			name: "INSERT_NO_COLUMNS",
+			sql:  `insert into users values ($1, $2)`,
+			want: `
+INSERT INTO users
+VALUES (
+  $1,
+  $2
+)
+`,
+		},
+		{
 			name: "insert: named parameter",
 			sql:  `insert into users (user_name, user_age, created_at) values (:user_name, :user_age, now())`,
 			want: `
