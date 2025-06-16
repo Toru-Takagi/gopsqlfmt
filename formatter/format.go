@@ -471,6 +471,17 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 				}
 
 				bu.WriteString(")")
+			case *pg_query.Node_TypeCast:
+				bu.WriteString("\n")
+				bu.WriteString(internal.GetIndent(conf))
+				for i := 0; i < indent; i++ {
+					bu.WriteString(internal.GetIndent(conf))
+				}
+				tc, err := nodeformatter.FormatTypeCast(ctx, n)
+				if err != nil {
+					return "", err
+				}
+				bu.WriteString(tc)
 			}
 			if res.ResTarget.Name != "" {
 				bu.WriteString(" AS ")

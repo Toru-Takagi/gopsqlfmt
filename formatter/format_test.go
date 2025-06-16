@@ -336,6 +336,20 @@ FROM login_users
 `,
 		},
 		{
+			name: "ARRAY_WITH_TYPECAST",
+			sql:  `SELECT ARRAY(select ged.day::text from gather_enable_day ged where ged.gather_uuid = g.gather_uuid) as enable_days FROM gather g`,
+			want: `
+SELECT
+  ARRAY(
+    SELECT
+      ged.day::text
+    FROM gather_enable_day ged
+    WHERE ged.gather_uuid = g.gather_uuid
+  ) AS enable_days
+FROM gather g
+`,
+		},
+		{
 			name: "FUNC_NAME_TYPE_CASE_UPPER",
 			sql:  `select array_agg(user_uuid), now(), gen_random_uuid() from users`,
 			conf: fmtconf.NewDefaultConfig().WithFuncNameTypeCaseUpper(),
