@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	pg_query "github.com/pganalyze/pg_query_go/v5"
+	pg_query "github.com/pganalyze/pg_query_go/v6"
 )
 
 func FormatTypeCast(ctx context.Context, tc *pg_query.Node_TypeCast) (string, error) {

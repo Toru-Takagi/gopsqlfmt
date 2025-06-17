@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	pg_query "github.com/pganalyze/pg_query_go/v5"
+	pg_query "github.com/pganalyze/pg_query_go/v6"
 )
 
 func FormatSortByDir(ctx context.Context, sortBy *pg_query.Node_SortBy) (string, error) {

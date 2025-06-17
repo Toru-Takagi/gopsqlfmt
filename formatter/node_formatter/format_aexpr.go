@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/Toru-Takagi/gopsqlfmt/fmtconf"
-	pg_query "github.com/pganalyze/pg_query_go/v5"
+	pg_query "github.com/pganalyze/pg_query_go/v6"
 )
 
 // ex) user_uuid = $1
