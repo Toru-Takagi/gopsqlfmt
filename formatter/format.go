@@ -10,7 +10,7 @@ import (
 	"github.com/Toru-Takagi/gopsqlfmt/formatter/internal"
 	nodeformatter "github.com/Toru-Takagi/gopsqlfmt/formatter/node_formatter"
 
-	pg_query "github.com/pganalyze/pg_query_go/v5"
+	pg_query "github.com/pganalyze/pg_query_go/v6"
 )
 
 const (
@@ -471,6 +471,17 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 				}
 
 				bu.WriteString(")")
+			case *pg_query.Node_TypeCast:
+				bu.WriteString("\n")
+				bu.WriteString(internal.GetIndent(conf))
+				for i := 0; i < indent; i++ {
+					bu.WriteString(internal.GetIndent(conf))
+				}
+				tc, err := nodeformatter.FormatTypeCast(ctx, n)
+				if err != nil {
+					return "", err
+				}
+				bu.WriteString(tc)
 			}
 			if res.ResTarget.Name != "" {
 				bu.WriteString(" AS ")

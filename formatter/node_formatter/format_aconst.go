@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	pg_query "github.com/pganalyze/pg_query_go/v5"
+	pg_query "github.com/pganalyze/pg_query_go/v6"
 )
 
 func FormatAConst(ctx context.Context, ac *pg_query.Node_AConst) (string, error) {
