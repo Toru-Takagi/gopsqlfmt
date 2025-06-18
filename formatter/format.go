@@ -153,8 +153,11 @@ func Format(sql string, conf *fmtconf.Config) (string, error) {
 					if len(stmt.InsertStmt.OnConflictClause.Infer.IndexElems) > 0 {
 						strBuilder.WriteString("(")
 					}
-					for _, elm := range stmt.InsertStmt.OnConflictClause.Infer.IndexElems {
+					for i, elm := range stmt.InsertStmt.OnConflictClause.Infer.IndexElems {
 						if idxElm, ok := elm.Node.(*pg_query.Node_IndexElem); ok {
+							if i > 0 {
+								strBuilder.WriteString(", ")
+							}
 							strBuilder.WriteString(idxElm.IndexElem.Name)
 						}
 					}

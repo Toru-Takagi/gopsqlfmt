@@ -691,6 +691,26 @@ DO NOTHING
 `,
 		},
 		{
+			name: "insert: on conflict multiple columns do nothing",
+			sql: `
+				insert into users (user_uuid, google_account_email, user_name) values ($1, $2, $3)
+				on conflict (user_uuid, google_account_email) do nothing
+			`,
+			want: `
+INSERT INTO users(
+  user_uuid,
+  google_account_email,
+  user_name
+) VALUES (
+  $1,
+  $2,
+  $3
+)
+ON CONFLICT(user_uuid, google_account_email)
+DO NOTHING
+`,
+		},
+		{
 			name: "simple update",
 			sql:  `update users set user_name = $1, user_age = $2, updated_at = now() where user_uuid = $3`,
 			want: `
