@@ -781,6 +781,62 @@ SELECT
 FROM users
 `,
 		},
+		{
+			name: "UNION_ALL",
+			sql:  `SELECT name FROM (SELECT ga.attendance_name as name FROM gather_attendance ga UNION ALL SELECT gp.participant_name as name FROM gather_participant gp) AS combined_names`,
+			want: `
+SELECT
+  name
+FROM (
+  SELECT
+    ga.attendance_name AS name
+  FROM gather_attendance ga
+  UNION ALL
+  SELECT
+    gp.participant_name AS name
+  FROM gather_participant gp
+) combined_names
+`,
+		},
+		{
+			name: "UNION",
+			sql:  `SELECT user_name FROM users UNION SELECT guest_name FROM guests`,
+			want: `
+SELECT
+  user_name
+FROM users
+UNION
+SELECT
+  guest_name
+FROM guests
+`,
+		},
+		{
+			name: "COMPLEX_UNION_ALL_SUBQUERY",
+			sql:  `SELECT g.gather_uuid, COALESCE((SELECT COUNT(DISTINCT name) FROM (SELECT ga.attendance_name as name FROM gather_attendance ga WHERE g.gather_uuid = ga.gather_uuid UNION ALL SELECT gp.participant_name as name FROM gather_participant gp WHERE g.gather_uuid = gp.gather_uuid) AS combined_names), 0) AS number_of_participants FROM gather g WHERE g.gather_uuid = ANY($1) AND g.deleted_at IS NULL`,
+			want: `
+SELECT
+  g.gather_uuid,
+  COALESCE((
+    SELECT
+      count(DISTINCT name)
+    FROM (
+      SELECT
+        ga.attendance_name AS name
+      FROM gather_attendance ga
+      WHERE g.gather_uuid = ga.gather_uuid
+      UNION ALL
+      SELECT
+        gp.participant_name AS name
+      FROM gather_participant gp
+      WHERE g.gather_uuid = gp.gather_uuid
+    ) combined_names
+  ), 0) AS number_of_participants
+FROM gather g
+WHERE g.gather_uuid = ANY($1)
+  AND g.deleted_at IS NULL
+`,
+		},
 	}
 
 	for _, tt := range tests {
