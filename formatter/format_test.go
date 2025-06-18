@@ -739,6 +739,29 @@ WHERE locale = current_setting('locale')
 `,
 		},
 		{
+			name: "WHERE with IS NULL",
+			sql:  `SELECT tweet_uuid, body FROM tweet WHERE operated_by = $1 AND deleted_at IS NULL ORDER BY created_at DESC`,
+			want: `
+SELECT
+  tweet_uuid,
+  body
+FROM tweet
+WHERE operated_by = $1
+  AND deleted_at IS NULL
+ORDER BY created_at DESC
+`,
+		},
+		{
+			name: "WHERE with IS NOT NULL",
+			sql:  `SELECT user_uuid FROM users WHERE email IS NOT NULL`,
+			want: `
+SELECT
+  user_uuid
+FROM users
+WHERE email IS NOT NULL
+`,
+		},
+		{
 			name: "INDENT_TYPE_TAB",
 			sql:  `select user_uuid from users`,
 			conf: fmtconf.NewDefaultConfig().WithIndentTypeTab(),

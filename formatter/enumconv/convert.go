@@ -57,3 +57,13 @@ func SubLinkTypeToString(slt pg_query.SubLinkType) (string, error) {
 	}
 	return "", errors.New("SubLinkTypeToString: unknown SubLinkType")
 }
+
+func NullTestTypeToString(ntt pg_query.NullTestType) (string, error) {
+	switch ntt {
+	case pg_query.NullTestType_IS_NULL:
+		return "IS NULL", nil
+	case pg_query.NullTestType_IS_NOT_NULL:
+		return "IS NOT NULL", nil
+	}
+	return "", errors.New("NullTestTypeToString: unknown NullTestType")
+}
