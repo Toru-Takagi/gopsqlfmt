@@ -544,6 +544,17 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 					return "", err
 				}
 				bu.WriteString(tc)
+			case *pg_query.Node_CaseExpr:
+				bu.WriteString("\n")
+				bu.WriteString(internal.GetIndent(conf))
+				for i := 0; i < indent; i++ {
+					bu.WriteString(internal.GetIndent(conf))
+				}
+				caseExpr, err := nodeformatter.FormatCaseExpr(ctx, n, indent, conf)
+				if err != nil {
+					return "", err
+				}
+				bu.WriteString(caseExpr)
 			}
 			if res.ResTarget.Name != "" {
 				bu.WriteString(" AS ")

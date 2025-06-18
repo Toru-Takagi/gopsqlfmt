@@ -837,6 +837,74 @@ WHERE g.gather_uuid = ANY($1)
   AND g.deleted_at IS NULL
 `,
 		},
+		{
+			name: "CASE_SIMPLE",
+			sql:  `SELECT name, CASE WHEN age >= 18 THEN 'adult' ELSE 'minor' END AS age_category FROM users`,
+			want: `
+SELECT
+  name,
+  CASE WHEN age >= 18 THEN 'adult' ELSE 'minor' END AS age_category
+FROM users
+`,
+		},
+		{
+			name: "CASE_WITH_IS_NOT_NULL",
+			sql:  `SELECT todo_setting_uuid, label, day_of_week, CASE WHEN setting_uuid IS NOT NULL THEN 'COMPLETE' ELSE 'INCOMPLETE' END AS today_status FROM todo_settings`,
+			want: `
+SELECT
+  todo_setting_uuid,
+  label,
+  day_of_week,
+  CASE WHEN setting_uuid IS NOT NULL THEN 'COMPLETE' ELSE 'INCOMPLETE' END AS today_status
+FROM todo_settings
+`,
+		},
+		{
+			name: "CASE_WITH_IS_NULL",
+			sql:  `SELECT user_uuid, CASE WHEN email IS NULL THEN 'no email' ELSE email END AS email_display FROM users`,
+			want: `
+SELECT
+  user_uuid,
+  CASE WHEN email IS NULL THEN 'no email' ELSE email END AS email_display
+FROM users
+`,
+		},
+		{
+			name: "CASE_MULTIPLE_WHEN",
+			sql:  `SELECT name, CASE WHEN age < 13 THEN 'child' WHEN age < 18 THEN 'teen' ELSE 'adult' END AS age_group FROM users`,
+			want: `
+SELECT
+  name,
+  CASE WHEN age < 13 THEN 'child' WHEN age < 18 THEN 'teen' ELSE 'adult' END AS age_group
+FROM users
+`,
+		},
+		{
+			name: "CASE_WITH_COLUMN_RESULT",
+			sql:  `SELECT user_uuid, CASE WHEN preferred_name IS NOT NULL THEN preferred_name ELSE full_name END AS display_name FROM users`,
+			want: `
+SELECT
+  user_uuid,
+  CASE WHEN preferred_name IS NOT NULL THEN preferred_name ELSE full_name END AS display_name
+FROM users
+`,
+		},
+		{
+			name: "CASE_COMPLEX_QUERY_WITH_JOINS",
+			sql:  `SELECT ts.todo_setting_uuid, ts.label, ts.day_of_week, CASE WHEN t.setting_uuid IS NOT NULL THEN 'COMPLETE' ELSE 'INCOMPLETE' END AS today_status FROM todo_settings ts LEFT JOIN todo t ON ts.todo_setting_uuid = t.setting_uuid AND t.operate_date = $2 WHERE ts.operated_by_user_uuid = $1`,
+			want: `
+SELECT
+  ts.todo_setting_uuid,
+  ts.label,
+  ts.day_of_week,
+  CASE WHEN t.setting_uuid IS NOT NULL THEN 'COMPLETE' ELSE 'INCOMPLETE' END AS today_status
+FROM todo_settings ts
+  LEFT JOIN todo t
+    ON ts.todo_setting_uuid = t.setting_uuid
+  AND t.operate_date = $2
+WHERE ts.operated_by_user_uuid = $1
+`,
+		},
 	}
 
 	for _, tt := range tests {
