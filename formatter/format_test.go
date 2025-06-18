@@ -400,6 +400,16 @@ WHERE user_uuid = ANY(:user_uuids::uuid[])
 `,
 		},
 		{
+			name: "ANY_positional_parameter",
+			sql:  `select user_name from users where user_uuid = ANY($1)`,
+			want: `
+SELECT
+  user_name
+FROM users
+WHERE user_uuid = ANY($1)
+`,
+		},
+		{
 			name: "select with subquery",
 			sql:  `select u.user_uuid, (select ull.last_login_at, current_setting('test') from user_last_login ull where ull.user_uuid = u.user_uuid and u.email = :email) as last_login_at from users u`,
 			want: `

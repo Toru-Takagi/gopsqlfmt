@@ -324,6 +324,59 @@ func Format(sql string, conf *fmtconf.Config) (string, error) {
 }
 
 func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, indent int, conf *fmtconf.Config) (string, error) {
+	// Handle set operations first, before checking target list
+	if stmt.SelectStmt.Op != pg_query.SetOperation_SETOP_NONE {
+		var bu strings.Builder
+
+		if stmt.SelectStmt.Larg != nil {
+			leftStmt := &pg_query.Node_SelectStmt{SelectStmt: stmt.SelectStmt.Larg}
+			leftRes, err := FormatSelectStmt(ctx, leftStmt, indent, conf)
+			if err != nil {
+				return "", err
+			}
+			bu.WriteString(leftRes)
+		}
+
+		// Add set operation
+		bu.WriteString("\n")
+		for i := 0; i < indent; i++ {
+			bu.WriteString(internal.GetIndent(conf))
+		}
+		switch stmt.SelectStmt.Op {
+		case pg_query.SetOperation_SETOP_UNION:
+			if stmt.SelectStmt.All {
+				bu.WriteString("UNION ALL")
+			} else {
+				bu.WriteString("UNION")
+			}
+		case pg_query.SetOperation_SETOP_INTERSECT:
+			if stmt.SelectStmt.All {
+				bu.WriteString("INTERSECT ALL")
+			} else {
+				bu.WriteString("INTERSECT")
+			}
+		case pg_query.SetOperation_SETOP_EXCEPT:
+			if stmt.SelectStmt.All {
+				bu.WriteString("EXCEPT ALL")
+			} else {
+				bu.WriteString("EXCEPT")
+			}
+		}
+
+		// Add right side
+		if stmt.SelectStmt.Rarg != nil {
+			rightStmt := &pg_query.Node_SelectStmt{SelectStmt: stmt.SelectStmt.Rarg}
+			rightRes, err := FormatSelectStmt(ctx, rightStmt, indent, conf)
+			if err != nil {
+				return "", err
+			}
+			bu.WriteString("\n")
+			bu.WriteString(rightRes)
+		}
+
+		return bu.String(), nil
+	}
+
 	if len(stmt.SelectStmt.TargetList) == 0 {
 		return "", nil
 	}
@@ -641,6 +694,43 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 						bu.WriteString(arg)
 
 						bu.WriteString(")")
+					case *pg_query.Node_CoalesceExpr:
+						if sortI != 0 {
+							bu.WriteString(",")
+							bu.WriteString("\n")
+							bu.WriteString(internal.GetIndent(conf))
+						}
+						bu.WriteString("COALESCE")
+						bu.WriteString("(")
+
+						for argI, arg := range n.CoalesceExpr.Args {
+							if argI != 0 {
+								bu.WriteString(",")
+								bu.WriteString(" ")
+							}
+							switch argNode := arg.Node.(type) {
+							case *pg_query.Node_ColumnRef:
+								field, err := nodeformatter.FormatColumnRefFields(ctx, argNode)
+								if err != nil {
+									return "", err
+								}
+								bu.WriteString(field)
+							case *pg_query.Node_AConst:
+								aconst, err := nodeformatter.FormatAConst(ctx, argNode)
+								if err != nil {
+									return "", err
+								}
+								bu.WriteString(aconst)
+							}
+						}
+
+						bu.WriteString(")")
+
+						sortBy, err := nodeformatter.FormatSortByDir(ctx, sortBy)
+						if err != nil {
+							return "", err
+						}
+						bu.WriteString(sortBy)
 					}
 				}
 			}
@@ -737,6 +827,32 @@ func FormatSelectStmtFromClause(ctx context.Context, node any, indent int, conf 
 		if n.RangeFunction.Alias != nil {
 			bu.WriteString(" ")
 			bu.WriteString(n.RangeFunction.Alias.Aliasname)
+		}
+	case *pg_query.Node_RangeSubselect:
+		bu.WriteString("\n")
+		for i := 0; i < indent; i++ {
+			bu.WriteString(internal.GetIndent(conf))
+		}
+		bu.WriteString("FROM")
+		bu.WriteString(" ")
+
+		if selectStmt, ok := n.RangeSubselect.Subquery.Node.(*pg_query.Node_SelectStmt); ok {
+			bu.WriteString("(\n")
+			res, err := FormatSelectStmt(ctx, selectStmt, indent+1, conf)
+			if err != nil {
+				return "", err
+			}
+			bu.WriteString(res)
+			bu.WriteString("\n")
+			for i := 0; i < indent; i++ {
+				bu.WriteString(internal.GetIndent(conf))
+			}
+			bu.WriteString(")")
+
+			if n.RangeSubselect.Alias != nil {
+				bu.WriteString(" ")
+				bu.WriteString(n.RangeSubselect.Alias.Aliasname)
+			}
 		}
 	case *pg_query.Node_JoinExpr:
 		res, err := FormatSelectStmtFromClause(ctx, n.JoinExpr.Larg.Node, indent, conf)

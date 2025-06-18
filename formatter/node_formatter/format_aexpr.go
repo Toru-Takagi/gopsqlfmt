@@ -54,8 +54,15 @@ func FormatAExpr(ctx context.Context, aeXpr *pg_query.Node_AExpr, conf *fmtconf.
 
 	// output parameter (if $1)
 	case *pg_query.Node_ParamRef:
-		bu.WriteString(" $")
-		bu.WriteString(fmt.Sprint(rexprNode.ParamRef.Number))
+		// Handle ANY operator specially
+		if aeXpr.AExpr.Kind == pg_query.A_Expr_Kind_AEXPR_OP_ANY {
+			bu.WriteString(" ANY($")
+			bu.WriteString(fmt.Sprint(rexprNode.ParamRef.Number))
+			bu.WriteString(")")
+		} else {
+			bu.WriteString(" $")
+			bu.WriteString(fmt.Sprint(rexprNode.ParamRef.Number))
+		}
 
 	case *pg_query.Node_FuncCall:
 		funcCall, err := FormatFuncname(ctx, rexprNode, conf)
