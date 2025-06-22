@@ -45,6 +45,9 @@ func FormatFuncname(ctx context.Context, funcCall *pg_query.Node_FuncCall, conf 
 				bu.WriteString(convertFuncNameTypeCase("array_length", "ARRAY_LENGTH", conf))
 			case "cardinality":
 				bu.WriteString(convertFuncNameTypeCase("cardinality", "CARDINALITY", conf))
+			case "date":
+				// https://www.postgresql.org/docs/15/functions-datetime.html
+				bu.WriteString(convertFuncNameTypeCase("date", "DATE", conf))
 			}
 		}
 	}

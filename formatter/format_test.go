@@ -905,6 +905,24 @@ FROM todo_settings ts
 WHERE ts.operated_by_user_uuid = $1
 `,
 		},
+		{
+			name: "DATE_FUNCTION_IN_WHERE",
+			sql:  `SELECT g.gather_uuid, l.user_id, l.group_id FROM gather g INNER JOIN line_user_gather_relation l ON g.gather_uuid = l.gather_uuid WHERE DATE(g.deadline_date_time) = $1 AND g.deadline_date_time IS NOT NULL AND g.deleted_at IS NULL AND g.confirmed_start_date_time IS NULL AND l.user_id IS NOT NULL`,
+			want: `
+SELECT
+  g.gather_uuid,
+  l.user_id,
+  l.group_id
+FROM gather g
+  INNER JOIN line_user_gather_relation l
+    ON g.gather_uuid = l.gather_uuid
+WHERE date(g.deadline_date_time) = $1
+  AND g.deadline_date_time IS NOT NULL
+  AND g.deleted_at IS NULL
+  AND g.confirmed_start_date_time IS NULL
+  AND l.user_id IS NOT NULL
+`,
+		},
 	}
 
 	for _, tt := range tests {

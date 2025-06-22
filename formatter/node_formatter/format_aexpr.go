@@ -13,13 +13,28 @@ import (
 func FormatAExpr(ctx context.Context, aeXpr *pg_query.Node_AExpr, conf *fmtconf.Config) (string, error) {
 	var bu strings.Builder
 
-	// output column name
-	if cRef, ok := aeXpr.AExpr.Lexpr.Node.(*pg_query.Node_ColumnRef); ok {
-		field, err := FormatColumnRefFields(ctx, cRef)
+	// output column name or function call
+	switch lexprNode := aeXpr.AExpr.Lexpr.Node.(type) {
+	case *pg_query.Node_ColumnRef:
+		field, err := FormatColumnRefFields(ctx, lexprNode)
 		if err != nil {
 			return "", err
 		}
 		bu.WriteString(field)
+	case *pg_query.Node_FuncCall:
+		funcCall, err := FormatFuncname(ctx, lexprNode, conf)
+		if err != nil {
+			return "", err
+		}
+		bu.WriteString(funcCall)
+		bu.WriteString("(")
+
+		arg, err := FormatFuncCallArgs(ctx, lexprNode, 0, conf)
+		if err != nil {
+			return "", err
+		}
+		bu.WriteString(arg)
+		bu.WriteString(")")
 	}
 
 	// output operator
