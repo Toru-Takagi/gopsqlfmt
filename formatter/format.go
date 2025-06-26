@@ -268,6 +268,9 @@ func Format(sql string, conf *fmtconf.Config) (string, error) {
 				if nBoolExpr, ok := stmt.UpdateStmt.WhereClause.Node.(*pg_query.Node_BoolExpr); ok {
 					res, err = formatBoolExpr(ctx, nBoolExpr, 0, conf)
 				}
+				if nNull, ok := stmt.UpdateStmt.WhereClause.Node.(*pg_query.Node_NullTest); ok {
+					res, err = nodeformatter.FormatNullTest(ctx, nNull)
+				}
 				if err != nil {
 					return "", err
 				}
@@ -297,6 +300,9 @@ func Format(sql string, conf *fmtconf.Config) (string, error) {
 				}
 				if nBoolExpr, ok := stmt.DeleteStmt.WhereClause.Node.(*pg_query.Node_BoolExpr); ok {
 					res, err = formatBoolExpr(ctx, nBoolExpr, 0, conf)
+				}
+				if nNull, ok := stmt.DeleteStmt.WhereClause.Node.(*pg_query.Node_NullTest); ok {
+					res, err = nodeformatter.FormatNullTest(ctx, nNull)
 				}
 				if err != nil {
 					return "", err
@@ -505,6 +511,18 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 			bu.WriteString(res)
 		case *pg_query.Node_BoolExpr:
 			res, err := formatBoolExpr(ctx, n, indent, conf)
+			if err != nil {
+				return "", err
+			}
+			bu.WriteString("\n")
+			for i := 0; i < indent; i++ {
+				bu.WriteString(internal.GetIndent(conf))
+			}
+			bu.WriteString("WHERE")
+			bu.WriteString(" ")
+			bu.WriteString(res)
+		case *pg_query.Node_NullTest:
+			res, err := nodeformatter.FormatNullTest(ctx, n)
 			if err != nil {
 				return "", err
 			}
@@ -798,6 +816,12 @@ func FormatSelectStmtFromClause(ctx context.Context, node any, indent int, conf 
 				bu.WriteString(res)
 			case *pg_query.Node_BoolExpr:
 				res, err := formatBoolExpr(ctx, qualsNode, 0, conf)
+				if err != nil {
+					return "", err
+				}
+				bu.WriteString(res)
+			case *pg_query.Node_NullTest:
+				res, err := nodeformatter.FormatNullTest(ctx, qualsNode)
 				if err != nil {
 					return "", err
 				}

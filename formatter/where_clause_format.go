@@ -58,6 +58,24 @@ func formatBoolExpr(ctx context.Context, be *pg_query.Node_BoolExpr, indent int,
 			bu.WriteString("\n")
 			bu.WriteString(internal.GetIndent(conf))
 			bu.WriteString(")")
+		case *pg_query.Node_NullTest:
+			res, err := nodeformatter.FormatNullTest(ctx, n)
+			if err != nil {
+				return "", err
+			}
+			if argI != 0 {
+				bu.WriteString("\n")
+				for i := 0; i <= indent; i++ {
+					bu.WriteString(internal.GetIndent(conf))
+				}
+				boolStr, err := enumconv.BoolExprTypeToString(be.BoolExpr.Boolop)
+				if err != nil {
+					return "", err
+				}
+				bu.WriteString(boolStr)
+				bu.WriteString(" ")
+			}
+			bu.WriteString(res)
 		case *pg_query.Node_SubLink:
 			if selectStmt, ok := n.SubLink.Subselect.Node.(*pg_query.Node_SelectStmt); ok {
 				res, err := FormatSelectStmt(ctx, selectStmt, indent+1, conf)
