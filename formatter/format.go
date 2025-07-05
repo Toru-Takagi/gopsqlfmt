@@ -649,12 +649,19 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 			bu.WriteString(",")
 			bu.WriteString(" ")
 		}
-		if cRef, ok := gClause.Node.(*pg_query.Node_ColumnRef); ok {
-			field, err := nodeformatter.FormatColumnRefFields(ctx, cRef)
+		switch node := gClause.Node.(type) {
+		case *pg_query.Node_ColumnRef:
+			field, err := nodeformatter.FormatColumnRefFields(ctx, node)
 			if err != nil {
 				return "", err
 			}
 			bu.WriteString(field)
+		case *pg_query.Node_TypeCast:
+			tc, err := nodeformatter.FormatTypeCast(ctx, node)
+			if err != nil {
+				return "", err
+			}
+			bu.WriteString(tc)
 		}
 	}
 
@@ -681,6 +688,23 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 							return "", err
 						}
 						bu.WriteString(field)
+
+						sortBy, err := nodeformatter.FormatSortByDir(ctx, sortBy)
+						if err != nil {
+							return "", err
+						}
+						bu.WriteString(sortBy)
+					case *pg_query.Node_TypeCast:
+						if sortI != 0 {
+							bu.WriteString(",")
+							bu.WriteString("\n")
+							bu.WriteString(internal.GetIndent(conf))
+						}
+						tc, err := nodeformatter.FormatTypeCast(ctx, n)
+						if err != nil {
+							return "", err
+						}
+						bu.WriteString(tc)
 
 						sortBy, err := nodeformatter.FormatSortByDir(ctx, sortBy)
 						if err != nil {

@@ -923,6 +923,20 @@ WHERE date(g.deadline_date_time) = $1
   AND l.user_id IS NOT NULL
 `,
 		},
+		{
+			name: "GROUP_BY_WITH_TYPECAST",
+			sql:  `SELECT ga.attendance_date::date::text AS attendance_date, ga.status, count(DISTINCT ga.attendance_name) AS count FROM gather_attendance ga WHERE ga.gather_uuid = $1 GROUP BY ga.attendance_date::date, ga.status ORDER BY ga.attendance_date::date ASC`,
+			want: `
+SELECT
+  ga.attendance_date::date::text AS attendance_date,
+  ga.status,
+  count(DISTINCT ga.attendance_name) AS count
+FROM gather_attendance ga
+WHERE ga.gather_uuid = $1
+GROUP BY ga.attendance_date::date, ga.status
+ORDER BY ga.attendance_date::date ASC
+`,
+		},
 	}
 
 	for _, tt := range tests {
