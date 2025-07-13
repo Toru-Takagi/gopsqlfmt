@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/Toru-Takagi/gopsqlfmt/fmtconf"
+	"github.com/Toru-Takagi/gopsqlfmt/formatter/internal"
 
 	pg_query "github.com/pganalyze/pg_query_go/v6"
 )
@@ -88,6 +89,24 @@ func FormatCaseExpr(ctx context.Context, n *pg_query.Node_CaseExpr, indent int, 
 				return "", err
 			}
 			bu.WriteString(field)
+		case *pg_query.Node_SubLink:
+			// Handle subqueries in ELSE clause
+			if selectStmt, ok := defResult.SubLink.Subselect.Node.(*pg_query.Node_SelectStmt); ok {
+				subRes, err := FormatSelectStmtForFuncArg(ctx, selectStmt, indent+1, conf)
+				if err != nil {
+					return "", err
+				}
+				bu.WriteString("(\n")
+				for i := 0; i < indent+1; i++ {
+					bu.WriteString(internal.GetIndent(conf))
+				}
+				bu.WriteString(subRes)
+				bu.WriteString("\n")
+				for i := 0; i < indent; i++ {
+					bu.WriteString(internal.GetIndent(conf))
+				}
+				bu.WriteString(")")
+			}
 		}
 	}
 

@@ -937,6 +937,103 @@ GROUP BY ga.attendance_date::date, ga.status
 ORDER BY ga.attendance_date::date ASC
 `,
 		},
+		{
+			name: "COMPLEX_SUBQUERY_WITH_UNION_ALL_IN_FUNCTION",
+			sql: `SELECT
+    g.gather_uuid,
+    g.title,
+    g.mode,
+    g.adjustment_start_date_time,
+    g.adjustment_end_date_time,
+    g.confirmed_start_date_time,
+    g.confirmed_end_date_time,
+    g.min_number_of_participants,
+    COALESCE((
+        SELECT
+            COUNT(DISTINCT name)
+        FROM
+            (
+                SELECT
+                    ga.attendance_name as name
+                FROM gather_attendance ga
+                WHERE g.gather_uuid = ga.gather_uuid
+                UNION ALL
+                SELECT
+                    gp.participant_name as name
+                FROM gather_participant gp
+                WHERE g.gather_uuid = gp.gather_uuid
+            ) combined_names
+    ), 0) AS number_of_participants
+FROM gather g
+WHERE g.gather_uuid = ANY($1)
+    AND g.deleted_at IS NULL
+ORDER BY COALESCE(g.confirmed_start_date_time, g.adjustment_start_date_time) DESC`,
+			want: `
+SELECT
+  g.gather_uuid,
+  g.title,
+  g.mode,
+  g.adjustment_start_date_time,
+  g.adjustment_end_date_time,
+  g.confirmed_start_date_time,
+  g.confirmed_end_date_time,
+  g.min_number_of_participants,
+  COALESCE((
+    SELECT
+      count(DISTINCT name)
+    FROM (
+      SELECT
+        ga.attendance_name AS name
+      FROM gather_attendance ga
+      WHERE g.gather_uuid = ga.gather_uuid
+      UNION ALL
+      SELECT
+        gp.participant_name AS name
+      FROM gather_participant gp
+      WHERE g.gather_uuid = gp.gather_uuid
+    ) combined_names
+  ), 0) AS number_of_participants
+FROM gather g
+WHERE g.gather_uuid = ANY($1)
+  AND g.deleted_at IS NULL
+ORDER BY COALESCE(g.confirmed_start_date_time, g.adjustment_start_date_time) DESC
+`,
+		},
+		{
+			name: "CASE_WITH_COMPLEX_SUBQUERY",
+			sql: `SELECT
+    g.gather_uuid,
+    g.title,
+    CASE WHEN g.operated_by = $2 THEN 'CREATOR' ELSE 'VIEWER' END AS relationship_type,
+    CASE 
+        WHEN g.operated_by = $2 THEN NULL 
+        ELSE (
+            SELECT gvh.gather_view_history_uuid
+            FROM gather_view_history gvh
+            WHERE gvh.gather_uuid = g.gather_uuid AND gvh.user_uuid = $2
+            LIMIT 1
+        )
+    END AS gather_history_uuid
+FROM gather g
+WHERE g.gather_uuid = ANY($1)
+    AND g.deleted_at IS NULL`,
+			want: `
+SELECT
+  g.gather_uuid,
+  g.title,
+  CASE WHEN g.operated_by = $2 THEN 'CREATOR' ELSE 'VIEWER' END AS relationship_type,
+  CASE WHEN g.operated_by = $2 THEN NULL ELSE (
+    SELECT
+    gvh.gather_view_history_uuid
+  FROM gather_view_history gvh
+  WHERE gvh.gather_uuid = g.gather_uuid AND gvh.user_uuid = $2
+  LIMIT 1
+) END AS gather_history_uuid
+FROM gather g
+WHERE g.gather_uuid = ANY($1)
+  AND g.deleted_at IS NULL
+`,
+		},
 	}
 
 	for _, tt := range tests {
