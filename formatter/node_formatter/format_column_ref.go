@@ -16,9 +16,20 @@ func FormatColumnRefFields(ctx context.Context, columnRef *pg_query.Node_ColumnR
 			if fi != 0 {
 				bu.WriteString(".")
 			}
-			if n.String_.Sval == "excluded" {
+			switch strings.ToLower(n.String_.Sval) {
+			case "excluded":
 				bu.WriteString("EXCLUDED")
-			} else {
+			case "current_timestamp":
+				bu.WriteString("CURRENT_TIMESTAMP")
+			case "current_date":
+				bu.WriteString("CURRENT_DATE")
+			case "current_time":
+				bu.WriteString("CURRENT_TIME")
+			case "localtime":
+				bu.WriteString("LOCALTIME")
+			case "localtimestamp":
+				bu.WriteString("LOCALTIMESTAMP")
+			default:
 				bu.WriteString(n.String_.Sval)
 			}
 		case *pg_query.Node_AStar:

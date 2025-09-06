@@ -48,6 +48,21 @@ func FormatFuncname(ctx context.Context, funcCall *pg_query.Node_FuncCall, conf 
 			case "date":
 				// https://www.postgresql.org/docs/15/functions-datetime.html
 				bu.WriteString(convertFuncNameTypeCase("date", "DATE", conf))
+			case "current_timestamp":
+				// https://www.postgresql.org/docs/15/functions-datetime.html
+				bu.WriteString(convertFuncNameTypeCase("current_timestamp", "CURRENT_TIMESTAMP", conf))
+			case "current_date":
+				// https://www.postgresql.org/docs/15/functions-datetime.html
+				bu.WriteString(convertFuncNameTypeCase("current_date", "CURRENT_DATE", conf))
+			case "current_time":
+				// https://www.postgresql.org/docs/15/functions-datetime.html
+				bu.WriteString(convertFuncNameTypeCase("current_time", "CURRENT_TIME", conf))
+			case "localtime":
+				// https://www.postgresql.org/docs/15/functions-datetime.html
+				bu.WriteString(convertFuncNameTypeCase("localtime", "LOCALTIME", conf))
+			case "localtimestamp":
+				// https://www.postgresql.org/docs/15/functions-datetime.html
+				bu.WriteString(convertFuncNameTypeCase("localtimestamp", "LOCALTIMESTAMP", conf))
 			}
 		}
 	}

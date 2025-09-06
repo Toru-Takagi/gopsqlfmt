@@ -117,6 +117,29 @@ WHERE g.gather_uuid = ANY($1)
 ORDER BY COALESCE(g.confirmed_start_date_time, g.adjustment_start_date_time) DESC
 `,
 		},
+		{
+			name: "INSERT with CURRENT_TIMESTAMP",
+			sql:  "INSERT INTO hoge (created_at, updated_at) VALUES (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
+			want: `
+INSERT INTO hoge(
+  created_at,
+  updated_at
+) VALUES (
+  CURRENT_TIMESTAMP,
+  CURRENT_TIMESTAMP
+)
+`,
+		},
+		{
+			name: "UPDATE with CURRENT_TIMESTAMP",
+			sql:  "UPDATE users SET updated_at = CURRENT_TIMESTAMP WHERE id = $1",
+			want: `
+UPDATE users
+SET
+  updated_at = CURRENT_TIMESTAMP
+WHERE id = $1
+`,
+		},
 	}
 
 	for _, tt := range tests {

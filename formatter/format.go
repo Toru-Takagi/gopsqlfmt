@@ -130,6 +130,29 @@ func Format(sql string, conf *fmtconf.Config) (string, error) {
 									strBuilder.WriteString(arg)
 
 									strBuilder.WriteString(")")
+								case *pg_query.Node_SqlvalueFunction:
+									strBuilder.WriteString("\n")
+									strBuilder.WriteString(internal.GetIndent(conf))
+									switch v.SqlvalueFunction.Op {
+									case pg_query.SQLValueFunctionOp_SVFOP_CURRENT_TIMESTAMP:
+										strBuilder.WriteString("CURRENT_TIMESTAMP")
+									case pg_query.SQLValueFunctionOp_SVFOP_CURRENT_DATE:
+										strBuilder.WriteString("CURRENT_DATE")
+									case pg_query.SQLValueFunctionOp_SVFOP_CURRENT_TIME:
+										strBuilder.WriteString("CURRENT_TIME")
+									case pg_query.SQLValueFunctionOp_SVFOP_LOCALTIME:
+										strBuilder.WriteString("LOCALTIME")
+									case pg_query.SQLValueFunctionOp_SVFOP_LOCALTIMESTAMP:
+										strBuilder.WriteString("LOCALTIMESTAMP")
+									default:
+										strBuilder.WriteString(fmt.Sprintf("/* UNHANDLED SqlvalueFunction: %v */", v.SqlvalueFunction.Op))
+									}
+								default:
+									// Handle unknown node types to prevent SQL content loss
+									strBuilder.WriteString("\n")
+									strBuilder.WriteString(internal.GetIndent(conf))
+									// For debugging: add a placeholder that shows the unhandled type
+									strBuilder.WriteString(fmt.Sprintf("/* UNHANDLED: %T */", v))
 								}
 							}
 						}
@@ -207,6 +230,19 @@ func Format(sql string, conf *fmtconf.Config) (string, error) {
 								strBuilder.WriteString(res)
 								strBuilder.WriteString("(")
 								strBuilder.WriteString(")")
+							case *pg_query.Node_SqlvalueFunction:
+								switch n.SqlvalueFunction.Op {
+								case pg_query.SQLValueFunctionOp_SVFOP_CURRENT_TIMESTAMP:
+									strBuilder.WriteString("CURRENT_TIMESTAMP")
+								case pg_query.SQLValueFunctionOp_SVFOP_CURRENT_DATE:
+									strBuilder.WriteString("CURRENT_DATE")
+								case pg_query.SQLValueFunctionOp_SVFOP_CURRENT_TIME:
+									strBuilder.WriteString("CURRENT_TIME")
+								case pg_query.SQLValueFunctionOp_SVFOP_LOCALTIME:
+									strBuilder.WriteString("LOCALTIME")
+								case pg_query.SQLValueFunctionOp_SVFOP_LOCALTIMESTAMP:
+									strBuilder.WriteString("LOCALTIMESTAMP")
+								}
 							}
 						}
 					}
@@ -254,6 +290,19 @@ func Format(sql string, conf *fmtconf.Config) (string, error) {
 							strBuilder.WriteString(res)
 							strBuilder.WriteString("(")
 							strBuilder.WriteString(")")
+						case *pg_query.Node_SqlvalueFunction:
+							switch n.SqlvalueFunction.Op {
+							case pg_query.SQLValueFunctionOp_SVFOP_CURRENT_TIMESTAMP:
+								strBuilder.WriteString("CURRENT_TIMESTAMP")
+							case pg_query.SQLValueFunctionOp_SVFOP_CURRENT_DATE:
+								strBuilder.WriteString("CURRENT_DATE")
+							case pg_query.SQLValueFunctionOp_SVFOP_CURRENT_TIME:
+								strBuilder.WriteString("CURRENT_TIME")
+							case pg_query.SQLValueFunctionOp_SVFOP_LOCALTIME:
+								strBuilder.WriteString("LOCALTIME")
+							case pg_query.SQLValueFunctionOp_SVFOP_LOCALTIMESTAMP:
+								strBuilder.WriteString("LOCALTIMESTAMP")
+							}
 						}
 					}
 				}
