@@ -35,6 +35,35 @@ func FormatAExpr(ctx context.Context, aeXpr *pg_query.Node_AExpr, conf *fmtconf.
 		}
 		bu.WriteString(arg)
 		bu.WriteString(")")
+	case *pg_query.Node_CoalesceExpr:
+		bu.WriteString("COALESCE")
+		bu.WriteString("(")
+
+		for argI, arg := range lexprNode.CoalesceExpr.Args {
+			if argI != 0 {
+				bu.WriteString(",")
+				bu.WriteString(" ")
+			}
+			switch n := arg.Node.(type) {
+			case *pg_query.Node_ColumnRef:
+				field, err := FormatColumnRefFields(ctx, n)
+				if err != nil {
+					return "", err
+				}
+				bu.WriteString(field)
+			case *pg_query.Node_AConst:
+				aconst, err := FormatAConst(ctx, n)
+				if err != nil {
+					return "", err
+				}
+				bu.WriteString(aconst)
+			case *pg_query.Node_ParamRef:
+				bu.WriteString("$")
+				bu.WriteString(fmt.Sprint(n.ParamRef.Number))
+			}
+		}
+
+		bu.WriteString(")")
 	}
 
 	// output operator
@@ -132,6 +161,36 @@ func FormatAExpr(ctx context.Context, aeXpr *pg_query.Node_AExpr, conf *fmtconf.
 				bu.WriteString(")")
 			}
 		}
+
+	case *pg_query.Node_CoalesceExpr:
+		bu.WriteString(" COALESCE")
+		bu.WriteString("(")
+
+		for argI, arg := range rexprNode.CoalesceExpr.Args {
+			if argI != 0 {
+				bu.WriteString(",")
+				bu.WriteString(" ")
+			}
+			switch n := arg.Node.(type) {
+			case *pg_query.Node_ColumnRef:
+				field, err := FormatColumnRefFields(ctx, n)
+				if err != nil {
+					return "", err
+				}
+				bu.WriteString(field)
+			case *pg_query.Node_AConst:
+				aconst, err := FormatAConst(ctx, n)
+				if err != nil {
+					return "", err
+				}
+				bu.WriteString(aconst)
+			case *pg_query.Node_ParamRef:
+				bu.WriteString("$")
+				bu.WriteString(fmt.Sprint(n.ParamRef.Number))
+			}
+		}
+
+		bu.WriteString(")")
 	}
 
 	return bu.String(), nil

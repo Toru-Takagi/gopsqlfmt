@@ -169,6 +169,18 @@ FROM user
 LIMIT $1
 `,
 		},
+		{
+			name: "SELECT with WHERE COALESCE",
+			sql:  "SELECT user_uuid, name FROM user WHERE user_uuid = $1 AND COALESCE(name, '') = COALESCE($2, '')",
+			want: `
+SELECT
+  user_uuid,
+  name
+FROM user
+WHERE user_uuid = $1
+  AND COALESCE(name, '') = COALESCE($2, '')
+`,
+		},
 	}
 
 	for _, tt := range tests {
