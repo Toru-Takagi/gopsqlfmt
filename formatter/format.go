@@ -445,6 +445,11 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 	}
 	bu.WriteString("SELECT")
 
+	// output distinct
+	if len(stmt.SelectStmt.DistinctClause) > 0 {
+		bu.WriteString(" DISTINCT")
+	}
+
 	// output column name
 	for ti, node := range stmt.SelectStmt.TargetList {
 		if ti != 0 {
@@ -734,6 +739,31 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 		}
 	}
 
+	// output having clause
+	if stmt.SelectStmt.HavingClause != nil {
+		bu.WriteString("\n")
+		for i := 0; i < indent; i++ {
+			bu.WriteString(internal.GetIndent(conf))
+		}
+		bu.WriteString("HAVING")
+		bu.WriteString(" ")
+
+		switch n := stmt.SelectStmt.HavingClause.Node.(type) {
+		case *pg_query.Node_AExpr:
+			res, err := nodeformatter.FormatAExpr(ctx, n, conf)
+			if err != nil {
+				return "", err
+			}
+			bu.WriteString(res)
+		case *pg_query.Node_BoolExpr:
+			res, err := formatBoolExpr(ctx, n, indent, conf)
+			if err != nil {
+				return "", err
+			}
+			bu.WriteString(res)
+		}
+	}
+
 	// output sort clause
 	if stmt.SelectStmt.SortClause != nil {
 		bu.WriteString("\n")
@@ -1016,8 +1046,17 @@ func FormatSelectStmtFromClause(ctx context.Context, node any, indent int, conf 
 					return "", err
 				}
 				bu.WriteString(res)
+				bu.WriteString("\n")
+				for i := 0; i < indent+1; i++ {
+					bu.WriteString(internal.GetIndent(conf))
+				}
+				bu.WriteString(")")
+
+				if nRarg.RangeSubselect.Alias != nil {
+					bu.WriteString(" ")
+					bu.WriteString(nRarg.RangeSubselect.Alias.Aliasname)
+				}
 			}
-			// TODO: Alias
 		}
 
 		for _, u := range n.JoinExpr.UsingClause {

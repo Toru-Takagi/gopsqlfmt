@@ -181,6 +181,33 @@ WHERE user_uuid = $1
   AND COALESCE(name, '') = COALESCE($2, '')
 `,
 		},
+		{
+			name: "SELECT with HAVING COUNT DISTINCT",
+			sql:  "SELECT user_id, COUNT(*) FROM users GROUP BY user_id HAVING COUNT(DISTINCT name) < 5",
+			want: `
+SELECT
+  user_id,
+  count(*)
+FROM users
+GROUP BY user_id
+HAVING count(DISTINCT name) < 5
+`,
+		},
+		{
+			name: "SELECT with LEFT JOIN subquery DISTINCT",
+			sql:  "SELECT * FROM users LEFT JOIN (SELECT DISTINCT department FROM employees) dept ON users.dept_id = dept.department",
+			want: `
+SELECT
+  *
+FROM users
+  LEFT JOIN (
+    SELECT DISTINCT
+      department
+    FROM employees
+  ) dept
+    ON users.dept_id = dept.department
+`,
+		},
 	}
 
 	for _, tt := range tests {
