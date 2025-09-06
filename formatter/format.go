@@ -222,6 +222,9 @@ func Format(sql string, conf *fmtconf.Config) (string, error) {
 									return "", err
 								}
 								strBuilder.WriteString(field)
+							case *pg_query.Node_ParamRef:
+								strBuilder.WriteString("$")
+								strBuilder.WriteString(fmt.Sprint(n.ParamRef.Number))
 							case *pg_query.Node_FuncCall:
 								res, err := nodeformatter.FormatFuncname(ctx, n, conf)
 								if err != nil {
@@ -243,6 +246,12 @@ func Format(sql string, conf *fmtconf.Config) (string, error) {
 								case pg_query.SQLValueFunctionOp_SVFOP_LOCALTIMESTAMP:
 									strBuilder.WriteString("LOCALTIMESTAMP")
 								}
+							case *pg_query.Node_AConst:
+								aconst, err := nodeformatter.FormatAConst(ctx, n)
+								if err != nil {
+									return "", err
+								}
+								strBuilder.WriteString(aconst)
 							}
 						}
 					}
@@ -841,12 +850,16 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 		bu.WriteString("LIMIT")
 		bu.WriteString(" ")
 
-		if aCount, ok := stmt.SelectStmt.LimitCount.Node.(*pg_query.Node_AConst); ok {
-			res, err := nodeformatter.FormatAConst(ctx, aCount)
+		switch n := stmt.SelectStmt.LimitCount.Node.(type) {
+		case *pg_query.Node_AConst:
+			res, err := nodeformatter.FormatAConst(ctx, n)
 			if err != nil {
 				return "", err
 			}
 			bu.WriteString(res)
+		case *pg_query.Node_ParamRef:
+			bu.WriteString("$")
+			bu.WriteString(fmt.Sprint(n.ParamRef.Number))
 		}
 	}
 

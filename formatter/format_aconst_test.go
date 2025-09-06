@@ -140,6 +140,35 @@ SET
 WHERE id = $1
 `,
 		},
+		{
+			name: "INSERT with ON CONFLICT and parameters",
+			sql:  "INSERT INTO todo (title, created_at, updated_at) VALUES ($1, now(), now()) ON CONFLICT (todo_uuid) DO UPDATE SET title = $2, updated_at = now()",
+			want: `
+INSERT INTO todo(
+  title,
+  created_at,
+  updated_at
+) VALUES (
+  $1,
+  now(),
+  now()
+)
+ON CONFLICT(todo_uuid)
+DO UPDATE SET
+  title = $2,
+  updated_at = now()
+`,
+		},
+		{
+			name: "SELECT with LIMIT parameter",
+			sql:  "SELECT * FROM user LIMIT $1",
+			want: `
+SELECT
+  *
+FROM user
+LIMIT $1
+`,
+		},
 	}
 
 	for _, tt := range tests {
