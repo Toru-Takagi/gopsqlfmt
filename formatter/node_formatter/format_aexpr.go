@@ -125,42 +125,26 @@ func FormatAExpr(ctx context.Context, aeXpr *pg_query.Node_AExpr, conf *fmtconf.
 		bu.WriteString(")")
 
 	case *pg_query.Node_TypeCast:
-		if rexprNode.TypeCast.TypeName != nil {
-			if len(rexprNode.TypeCast.TypeName.ArrayBounds) > 0 {
-				bu.WriteString(" ")
-				bu.WriteString("ANY")
-				bu.WriteString("(")
-				if rexprNode.TypeCast.Arg != nil {
-					switch arg := rexprNode.TypeCast.Arg.Node.(type) {
-					case *pg_query.Node_AConst:
-						res, err := FormatAConst(ctx, arg)
-						if err != nil {
-							return "", err
-						}
-						bu.WriteString(res)
-						bu.WriteString("::")
-						switch n := rexprNode.TypeCast.TypeName.Names[0].Node.(type) {
-						case *pg_query.Node_String_:
-							bu.WriteString(n.String_.Sval)
-						}
-						bu.WriteString("[]")
-					case *pg_query.Node_ColumnRef:
-						field, err := FormatColumnRefFields(ctx, arg)
-						if err != nil {
-							return "", err
-						}
-						bu.WriteString(field)
-						bu.WriteString("::")
-						switch n := rexprNode.TypeCast.TypeName.Names[0].Node.(type) {
-						case *pg_query.Node_String_:
-							bu.WriteString(n.String_.Sval)
-						}
-						bu.WriteString("[]")
-					}
-				}
-				bu.WriteString(")")
-			}
+		formatted, err := FormatTypeCast(ctx, rexprNode)
+		if err != nil {
+			return "", err
 		}
+		if rexprNode.TypeCast.TypeName != nil && len(rexprNode.TypeCast.TypeName.ArrayBounds) > 0 {
+			bu.WriteString(" ANY(")
+			bu.WriteString(formatted)
+			bu.WriteString(")")
+		} else {
+			bu.WriteString(" ")
+			bu.WriteString(formatted)
+		}
+
+	case *pg_query.Node_AExpr:
+		inner, err := FormatAExpr(ctx, rexprNode, conf)
+		if err != nil {
+			return "", err
+		}
+		bu.WriteString(" ")
+		bu.WriteString(inner)
 
 	case *pg_query.Node_CoalesceExpr:
 		bu.WriteString(" COALESCE")

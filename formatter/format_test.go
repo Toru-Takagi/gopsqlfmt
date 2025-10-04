@@ -772,6 +772,16 @@ WHERE email IS NOT NULL
 `,
 		},
 		{
+			name: "WHERE with interval subtraction",
+			sql:  `SELECT * FROM access_logs WHERE accessed_at >= now() - interval '3 months'`,
+			want: `
+SELECT
+  *
+FROM access_logs
+WHERE accessed_at >= now() - '3 months'::interval
+`,
+		},
+		{
 			name: "INDENT_TYPE_TAB",
 			sql:  `select user_uuid from users`,
 			conf: fmtconf.NewDefaultConfig().WithIndentTypeTab(),
