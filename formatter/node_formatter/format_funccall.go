@@ -11,63 +11,65 @@ import (
 )
 
 func FormatFuncname(ctx context.Context, funcCall *pg_query.Node_FuncCall, conf *fmtconf.Config) (string, error) {
-	var bu strings.Builder
+	parts := make([]string, 0, len(funcCall.FuncCall.Funcname))
 
 	for _, name := range funcCall.FuncCall.Funcname {
 		if s, ok := name.Node.(*pg_query.Node_String_); ok {
-			switch s.String_.Sval {
+			switch strings.ToLower(s.String_.Sval) {
 			case "now":
 				// https://www.postgresql.org/docs/15/functions-datetime.html
-				bu.WriteString(convertFuncNameTypeCase("now", "NOW", conf))
+				parts = append(parts, convertFuncNameTypeCase("now", "NOW", conf))
 			case "count":
 				// https://www.postgresql.org/docs/15/functions-aggregate.html
-				bu.WriteString(convertFuncNameTypeCase("count", "COUNT", conf))
+				parts = append(parts, convertFuncNameTypeCase("count", "COUNT", conf))
 			case "min":
 				// https://www.postgresql.org/docs/15/functions-aggregate.html
-				bu.WriteString(convertFuncNameTypeCase("min", "MIN", conf))
+				parts = append(parts, convertFuncNameTypeCase("min", "MIN", conf))
 			case "gen_random_uuid":
 				// https://www.postgresql.org/docs/15/functions-uuid.html
-				bu.WriteString(convertFuncNameTypeCase("gen_random_uuid", "GEN_RANDOM_UUID", conf))
+				parts = append(parts, convertFuncNameTypeCase("gen_random_uuid", "GEN_RANDOM_UUID", conf))
 			case "current_setting":
 				// https://www.postgresql.org/docs/15/functions-admin.html#FUNCTIONS-ADMIN-SET
-				bu.WriteString(convertFuncNameTypeCase("current_setting", "CURRENT_SETTING", conf))
+				parts = append(parts, convertFuncNameTypeCase("current_setting", "CURRENT_SETTING", conf))
 			case "set_config":
 				// https://www.postgresql.org/docs/15/functions-admin.html#FUNCTIONS-ADMIN-SET
-				bu.WriteString(convertFuncNameTypeCase("set_config", "SET_CONFIG", conf))
+				parts = append(parts, convertFuncNameTypeCase("set_config", "SET_CONFIG", conf))
 			case "array_agg":
 				// https://www.postgresql.org/docs/15/functions-aggregate.html
-				bu.WriteString(convertFuncNameTypeCase("array_agg", "ARRAY_AGG", conf))
+				parts = append(parts, convertFuncNameTypeCase("array_agg", "ARRAY_AGG", conf))
 			case "json_agg":
-				bu.WriteString(convertFuncNameTypeCase("json_agg", "JSON_AGG", conf))
+				parts = append(parts, convertFuncNameTypeCase("json_agg", "JSON_AGG", conf))
 			case "json_build_object":
-				bu.WriteString(convertFuncNameTypeCase("json_build_object", "JSON_BUILD_OBJECT", conf))
+				parts = append(parts, convertFuncNameTypeCase("json_build_object", "JSON_BUILD_OBJECT", conf))
 			case "array_length":
-				bu.WriteString(convertFuncNameTypeCase("array_length", "ARRAY_LENGTH", conf))
+				parts = append(parts, convertFuncNameTypeCase("array_length", "ARRAY_LENGTH", conf))
 			case "cardinality":
-				bu.WriteString(convertFuncNameTypeCase("cardinality", "CARDINALITY", conf))
+				parts = append(parts, convertFuncNameTypeCase("cardinality", "CARDINALITY", conf))
 			case "date":
 				// https://www.postgresql.org/docs/15/functions-datetime.html
-				bu.WriteString(convertFuncNameTypeCase("date", "DATE", conf))
+				parts = append(parts, convertFuncNameTypeCase("date", "DATE", conf))
 			case "current_timestamp":
 				// https://www.postgresql.org/docs/15/functions-datetime.html
-				bu.WriteString(convertFuncNameTypeCase("current_timestamp", "CURRENT_TIMESTAMP", conf))
+				parts = append(parts, convertFuncNameTypeCase("current_timestamp", "CURRENT_TIMESTAMP", conf))
 			case "current_date":
 				// https://www.postgresql.org/docs/15/functions-datetime.html
-				bu.WriteString(convertFuncNameTypeCase("current_date", "CURRENT_DATE", conf))
+				parts = append(parts, convertFuncNameTypeCase("current_date", "CURRENT_DATE", conf))
 			case "current_time":
 				// https://www.postgresql.org/docs/15/functions-datetime.html
-				bu.WriteString(convertFuncNameTypeCase("current_time", "CURRENT_TIME", conf))
+				parts = append(parts, convertFuncNameTypeCase("current_time", "CURRENT_TIME", conf))
 			case "localtime":
 				// https://www.postgresql.org/docs/15/functions-datetime.html
-				bu.WriteString(convertFuncNameTypeCase("localtime", "LOCALTIME", conf))
+				parts = append(parts, convertFuncNameTypeCase("localtime", "LOCALTIME", conf))
 			case "localtimestamp":
 				// https://www.postgresql.org/docs/15/functions-datetime.html
-				bu.WriteString(convertFuncNameTypeCase("localtimestamp", "LOCALTIMESTAMP", conf))
+				parts = append(parts, convertFuncNameTypeCase("localtimestamp", "LOCALTIMESTAMP", conf))
+			default:
+				parts = append(parts, applyFuncNameCase(s.String_.Sval, conf))
 			}
 		}
 	}
 
-	return bu.String(), nil
+	return strings.Join(parts, "."), nil
 }
 
 func convertFuncNameTypeCase(lower, upper string, conf *fmtconf.Config) string {
@@ -78,6 +80,14 @@ func convertFuncNameTypeCase(lower, upper string, conf *fmtconf.Config) string {
 		return upper
 	}
 	return lower
+}
+
+func applyFuncNameCase(name string, conf *fmtconf.Config) string {
+	switch conf.FuncCallConfig.FuncNameTypeCase {
+	case fmtconf.FUNC_NAME_TYPE_CASE_UPPER:
+		return strings.ToUpper(name)
+	}
+	return strings.ToLower(name)
 }
 
 func FormatFuncCallArgs(ctx context.Context, funcCall *pg_query.Node_FuncCall, indent int, conf *fmtconf.Config) (string, error) {
@@ -138,6 +148,18 @@ func FormatFuncCallArgs(ctx context.Context, funcCall *pg_query.Node_FuncCall, i
 				}
 				bu.WriteString(")")
 			}
+		case *pg_query.Node_AExpr:
+			expr, err := FormatAExpr(ctx, n, conf)
+			if err != nil {
+				return "", err
+			}
+			bu.WriteString(expr)
+		case *pg_query.Node_TypeCast:
+			res, err := FormatTypeCast(ctx, n, conf)
+			if err != nil {
+				return "", err
+			}
+			bu.WriteString(res)
 		}
 	}
 

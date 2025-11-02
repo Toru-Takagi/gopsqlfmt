@@ -64,6 +64,18 @@ func FormatAExpr(ctx context.Context, aeXpr *pg_query.Node_AExpr, conf *fmtconf.
 		}
 
 		bu.WriteString(")")
+	case *pg_query.Node_TypeCast:
+		formatted, err := FormatTypeCast(ctx, lexprNode, conf)
+		if err != nil {
+			return "", err
+		}
+		bu.WriteString(formatted)
+	case *pg_query.Node_AExpr:
+		inner, err := FormatAExpr(ctx, lexprNode, conf)
+		if err != nil {
+			return "", err
+		}
+		bu.WriteString(inner)
 	}
 
 	// output operator
@@ -125,7 +137,7 @@ func FormatAExpr(ctx context.Context, aeXpr *pg_query.Node_AExpr, conf *fmtconf.
 		bu.WriteString(")")
 
 	case *pg_query.Node_TypeCast:
-		formatted, err := FormatTypeCast(ctx, rexprNode)
+		formatted, err := FormatTypeCast(ctx, rexprNode, conf)
 		if err != nil {
 			return "", err
 		}

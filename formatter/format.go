@@ -602,7 +602,7 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 				for i := 0; i < indent; i++ {
 					bu.WriteString(internal.GetIndent(conf))
 				}
-				tc, err := nodeformatter.FormatTypeCast(ctx, n)
+				tc, err := nodeformatter.FormatTypeCast(ctx, n, conf)
 				if err != nil {
 					return "", err
 				}
@@ -731,7 +731,7 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 			}
 			bu.WriteString(field)
 		case *pg_query.Node_TypeCast:
-			tc, err := nodeformatter.FormatTypeCast(ctx, node)
+			tc, err := nodeformatter.FormatTypeCast(ctx, node, conf)
 			if err != nil {
 				return "", err
 			}
@@ -799,7 +799,7 @@ func FormatSelectStmt(ctx context.Context, stmt *pg_query.Node_SelectStmt, inden
 							bu.WriteString("\n")
 							bu.WriteString(internal.GetIndent(conf))
 						}
-						tc, err := nodeformatter.FormatTypeCast(ctx, n)
+						tc, err := nodeformatter.FormatTypeCast(ctx, n, conf)
 						if err != nil {
 							return "", err
 						}

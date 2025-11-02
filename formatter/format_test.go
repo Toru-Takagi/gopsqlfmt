@@ -917,20 +917,40 @@ WHERE ts.operated_by_user_uuid = $1
 		},
 		{
 			name: "DATE_FUNCTION_IN_WHERE",
-			sql:  `SELECT g.gather_uuid, l.user_id, l.group_id FROM gather g INNER JOIN line_user_gather_relation l ON g.gather_uuid = l.gather_uuid WHERE DATE(g.deadline_date_time) = $1 AND g.deadline_date_time IS NOT NULL AND g.deleted_at IS NULL AND g.confirmed_start_date_time IS NULL AND l.user_id IS NOT NULL`,
+			sql:  `SELECT e.event_uuid, p.participant_id, p.team_id FROM events e INNER JOIN participant_event_relations p ON e.event_uuid = p.event_uuid WHERE DATE(e.deadline_at) = $1 AND e.deadline_at IS NOT NULL AND e.deleted_at IS NULL AND e.confirmed_start_at IS NULL AND p.participant_id IS NOT NULL`,
 			want: `
 SELECT
-  g.gather_uuid,
-  l.user_id,
-  l.group_id
-FROM gather g
-  INNER JOIN line_user_gather_relation l
-    ON g.gather_uuid = l.gather_uuid
-WHERE date(g.deadline_date_time) = $1
-  AND g.deadline_date_time IS NOT NULL
-  AND g.deleted_at IS NULL
-  AND g.confirmed_start_date_time IS NULL
-  AND l.user_id IS NOT NULL
+  e.event_uuid,
+  p.participant_id,
+  p.team_id
+FROM events e
+  INNER JOIN participant_event_relations p
+    ON e.event_uuid = p.event_uuid
+WHERE date(e.deadline_at) = $1
+  AND e.deadline_at IS NOT NULL
+  AND e.deleted_at IS NULL
+  AND e.confirmed_start_at IS NULL
+  AND p.participant_id IS NOT NULL
+`,
+		},
+		{
+			name: "DATE_PART_FUNCTION_IN_WHERE",
+			sql:  `SELECT e.event_uuid, p.participant_id, p.team_id FROM events e INNER JOIN participant_event_relations p ON e.event_uuid = p.event_uuid WHERE DATE(e.deadline_at) = $1 AND e.deadline_at IS NOT NULL AND e.deleted_at IS NULL AND e.confirmed_start_at IS NULL AND p.participant_id IS NOT NULL AND date_part('day', now() - e.created_at) >= 3 AND (date_part('day', now() - e.created_at)::bigint % 3) = 0`,
+			want: `
+SELECT
+  e.event_uuid,
+  p.participant_id,
+  p.team_id
+FROM events e
+  INNER JOIN participant_event_relations p
+    ON e.event_uuid = p.event_uuid
+WHERE date(e.deadline_at) = $1
+  AND e.deadline_at IS NOT NULL
+  AND e.deleted_at IS NULL
+  AND e.confirmed_start_at IS NULL
+  AND p.participant_id IS NOT NULL
+  AND date_part('day', now() - e.created_at) >= 3
+  AND date_part('day', now() - e.created_at)::bigint % 3 = 0
 `,
 		},
 		{
