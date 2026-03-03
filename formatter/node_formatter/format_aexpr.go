@@ -21,6 +21,9 @@ func FormatAExpr(ctx context.Context, aeXpr *pg_query.Node_AExpr, conf *fmtconf.
 			return "", err
 		}
 		bu.WriteString(field)
+	case *pg_query.Node_ParamRef:
+		bu.WriteString("$")
+		bu.WriteString(fmt.Sprint(lexprNode.ParamRef.Number))
 	case *pg_query.Node_FuncCall:
 		funcCall, err := FormatFuncname(ctx, lexprNode, conf)
 		if err != nil {

@@ -322,6 +322,20 @@ SELECT
 FROM users u
 `},
 		{
+			name: "FUNC_ARG_COALESCE_AND_PARAM_CONCAT",
+			sql:  `SELECT EXISTS(SELECT 1 FROM messages WHERE replace(coalesce(text, ''), ' ', '') = $4 OR replace(coalesce(text, ''), ' ', '') = $3 || $4)`,
+			want: `
+SELECT
+  EXISTS(
+    SELECT
+      1
+    FROM messages
+    WHERE replace(COALESCE(text, ''), ' ', '') = $4
+      OR replace(COALESCE(text, ''), ' ', '') = $3 || $4
+  )
+`,
+		},
+		{
 			name: "ARRAY",
 			sql:  `SELECT ARRAY(select user_uuid from users u WHERE u.user_uuid = $1) as user_uuids FROM login_users`,
 			want: `

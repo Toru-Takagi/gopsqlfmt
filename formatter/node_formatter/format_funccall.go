@@ -154,6 +154,52 @@ func FormatFuncCallArgs(ctx context.Context, funcCall *pg_query.Node_FuncCall, i
 				return "", err
 			}
 			bu.WriteString(expr)
+		case *pg_query.Node_CoalesceExpr:
+			bu.WriteString("COALESCE")
+			bu.WriteString("(")
+			for coalesceArgI, coalesceArg := range n.CoalesceExpr.Args {
+				if coalesceArgI != 0 {
+					bu.WriteString(",")
+					bu.WriteString(" ")
+				}
+				switch coalesceNode := coalesceArg.Node.(type) {
+				case *pg_query.Node_ColumnRef:
+					field, err := FormatColumnRefFields(ctx, coalesceNode)
+					if err != nil {
+						return "", err
+					}
+					bu.WriteString(field)
+				case *pg_query.Node_AConst:
+					aconst, err := FormatAConst(ctx, coalesceNode)
+					if err != nil {
+						return "", err
+					}
+					bu.WriteString(aconst)
+				case *pg_query.Node_ParamRef:
+					bu.WriteString("$")
+					bu.WriteString(fmt.Sprint(coalesceNode.ParamRef.Number))
+				case *pg_query.Node_FuncCall:
+					funcName, err := FormatFuncname(ctx, coalesceNode, conf)
+					if err != nil {
+						return "", err
+					}
+					bu.WriteString(funcName)
+					bu.WriteString("(")
+					funcArg, err := FormatFuncCallArgs(ctx, coalesceNode, indent, conf)
+					if err != nil {
+						return "", err
+					}
+					bu.WriteString(funcArg)
+					bu.WriteString(")")
+				case *pg_query.Node_AExpr:
+					coalesceExpr, err := FormatAExpr(ctx, coalesceNode, conf)
+					if err != nil {
+						return "", err
+					}
+					bu.WriteString(coalesceExpr)
+				}
+			}
+			bu.WriteString(")")
 		case *pg_query.Node_TypeCast:
 			res, err := FormatTypeCast(ctx, n, conf)
 			if err != nil {
