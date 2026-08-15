@@ -22,6 +22,12 @@ func formatBoolExpr(ctx context.Context, be *pg_query.Node_BoolExpr, indent int,
 			if err != nil {
 				return "", err
 			}
+			if be.BoolExpr.Boolop == pg_query.BoolExprType_NOT_EXPR {
+				bu.WriteString("NOT (")
+				bu.WriteString(res)
+				bu.WriteString(")")
+				continue
+			}
 			if argI != 0 {
 				bu.WriteString("\n")
 				for i := 0; i <= indent; i++ {
@@ -39,6 +45,9 @@ func formatBoolExpr(ctx context.Context, be *pg_query.Node_BoolExpr, indent int,
 			res, err := formatBoolExpr(ctx, n, indent+2, conf)
 			if err != nil {
 				return "", err
+			}
+			if be.BoolExpr.Boolop == pg_query.BoolExprType_NOT_EXPR {
+				bu.WriteString("NOT")
 			}
 			if argI != 0 {
 				bu.WriteString("\n")
@@ -62,6 +71,12 @@ func formatBoolExpr(ctx context.Context, be *pg_query.Node_BoolExpr, indent int,
 			res, err := nodeformatter.FormatNullTest(ctx, n)
 			if err != nil {
 				return "", err
+			}
+			if be.BoolExpr.Boolop == pg_query.BoolExprType_NOT_EXPR {
+				bu.WriteString("NOT (")
+				bu.WriteString(res)
+				bu.WriteString(")")
+				continue
 			}
 			if argI != 0 {
 				bu.WriteString("\n")

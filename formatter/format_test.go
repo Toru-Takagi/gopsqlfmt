@@ -755,6 +755,40 @@ WHERE user_uuid = $1
 `,
 		},
 		{
+			name: "delete with negated any condition",
+			sql: `delete from sample_records
+where group_uuid = $1
+  and not (
+    record_uuid = any($2::uuid[])
+  )`,
+			want: `
+DELETE FROM sample_records
+WHERE group_uuid = $1
+  AND (
+    NOT (record_uuid = ANY($2::uuid[]))
+  )
+`,
+		},
+		{
+			name: "delete with negated boolean expression",
+			sql:  `delete from sample_records where not (state = $1 or state = $2)`,
+			want: `
+DELETE FROM sample_records
+WHERE NOT (
+    state = $1
+      OR state = $2
+  )
+`,
+		},
+		{
+			name: "delete with negated null test",
+			sql:  `delete from sample_records where not (archived_at is null)`,
+			want: `
+DELETE FROM sample_records
+WHERE NOT (archived_at IS NULL)
+`,
+		},
+		{
 			name: "delete: current_setting",
 			sql:  `delete from users where locale = current_setting('locale')`,
 			want: `
