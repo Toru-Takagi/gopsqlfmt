@@ -400,6 +400,59 @@ SELECT
 `,
 		},
 		{
+			name: "FUNC_ARG_SUBQUERY_WITH_AND_EXISTS",
+			sql:  `SELECT wrap_value((SELECT value FROM sample_rows WHERE is_active AND EXISTS (SELECT 1 FROM allowed_rows)))`,
+			want: `
+SELECT
+  wrap_value((
+    SELECT
+      value
+    FROM sample_rows
+    WHERE is_active AND EXISTS(
+      SELECT
+        1
+      FROM allowed_rows
+    )
+  ))
+`,
+		},
+		{
+			name: "FUNC_ARG_SUBQUERY_WITH_OR_NOT_EXISTS",
+			sql:  `SELECT wrap_value((SELECT value FROM sample_rows WHERE is_active OR NOT EXISTS (SELECT 1 FROM blocked_rows)))`,
+			want: `
+SELECT
+  wrap_value((
+    SELECT
+      value
+    FROM sample_rows
+    WHERE is_active OR (NOT EXISTS(
+      SELECT
+        1
+      FROM blocked_rows
+    ))
+  ))
+`,
+		},
+		{
+			name: "FUNC_ARG_SUBQUERY_WITH_JOIN_EXISTS",
+			sql:  `SELECT wrap_value((SELECT r.value FROM sample_rows r JOIN related_rows x ON EXISTS (SELECT 1 FROM allowed_rows a WHERE a.value = x.value)))`,
+			want: `
+SELECT
+  wrap_value((
+    SELECT
+      r.value
+    FROM sample_rows r
+      INNER JOIN related_rows x
+        ON EXISTS(
+          SELECT
+            1
+          FROM allowed_rows a
+          WHERE a.value = x.value
+        )
+  ))
+`,
+		},
+		{
 			name: "COALESCE_ARRAY_LENGTH",
 			sql:  `select coalesce(array_length(u.user_uuids, 1),0) as result_count from users u`,
 			want: `
