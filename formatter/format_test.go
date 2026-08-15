@@ -314,6 +314,145 @@ FROM users u
 `,
 		},
 		{
+			name: "FUNC_ARG_SUBQUERY_WITH_NEGATED_CONDITION",
+			sql:  `SELECT wrap_value((SELECT value FROM sample_rows WHERE NOT (value = $1)))`,
+			want: `
+SELECT
+  wrap_value((
+    SELECT
+      value
+    FROM sample_rows
+    WHERE NOT (value = $1)
+  ))
+`,
+		},
+		{
+			name: "FUNC_ARG_SUBQUERY_WITH_NEGATED_BOOLEAN_EXPRESSION",
+			sql:  `SELECT wrap_value((SELECT value FROM sample_rows WHERE NOT (state = $1 OR state = $2)))`,
+			want: `
+SELECT
+  wrap_value((
+    SELECT
+      value
+    FROM sample_rows
+    WHERE NOT (state = $1 OR state = $2)
+  ))
+`,
+		},
+		{
+			name: "FUNC_ARG_SUBQUERY_WITH_NEGATED_NULL_TEST",
+			sql:  `SELECT wrap_value((SELECT value FROM sample_rows WHERE NOT (archived_at IS NULL)))`,
+			want: `
+SELECT
+  wrap_value((
+    SELECT
+      value
+    FROM sample_rows
+    WHERE NOT (archived_at IS NULL)
+  ))
+`,
+		},
+		{
+			name: "FUNC_ARG_SUBQUERY_WITH_NEGATED_COLUMN_REF",
+			sql:  `SELECT wrap_value((SELECT value FROM sample_rows WHERE NOT is_active))`,
+			want: `
+SELECT
+  wrap_value((
+    SELECT
+      value
+    FROM sample_rows
+    WHERE NOT (is_active)
+  ))
+`,
+		},
+		{
+			name: "FUNC_ARG_SUBQUERY_WITH_NOT_EXISTS",
+			sql:  `SELECT wrap_value((SELECT value FROM sample_rows WHERE NOT EXISTS (SELECT 1 FROM blocked_rows)))`,
+			want: `
+SELECT
+  wrap_value((
+    SELECT
+      value
+    FROM sample_rows
+    WHERE NOT EXISTS(
+      SELECT
+        1
+      FROM blocked_rows
+    )
+  ))
+`,
+		},
+		{
+			name: "FUNC_ARG_SUBQUERY_WITH_EXISTS",
+			sql:  `SELECT wrap_value((SELECT value FROM sample_rows WHERE EXISTS (SELECT 1 FROM allowed_rows)))`,
+			want: `
+SELECT
+  wrap_value((
+    SELECT
+      value
+    FROM sample_rows
+    WHERE EXISTS(
+      SELECT
+        1
+      FROM allowed_rows
+    )
+  ))
+`,
+		},
+		{
+			name: "FUNC_ARG_SUBQUERY_WITH_AND_EXISTS",
+			sql:  `SELECT wrap_value((SELECT value FROM sample_rows WHERE is_active AND EXISTS (SELECT 1 FROM allowed_rows)))`,
+			want: `
+SELECT
+  wrap_value((
+    SELECT
+      value
+    FROM sample_rows
+    WHERE is_active AND EXISTS(
+      SELECT
+        1
+      FROM allowed_rows
+    )
+  ))
+`,
+		},
+		{
+			name: "FUNC_ARG_SUBQUERY_WITH_OR_NOT_EXISTS",
+			sql:  `SELECT wrap_value((SELECT value FROM sample_rows WHERE is_active OR NOT EXISTS (SELECT 1 FROM blocked_rows)))`,
+			want: `
+SELECT
+  wrap_value((
+    SELECT
+      value
+    FROM sample_rows
+    WHERE is_active OR (NOT EXISTS(
+      SELECT
+        1
+      FROM blocked_rows
+    ))
+  ))
+`,
+		},
+		{
+			name: "FUNC_ARG_SUBQUERY_WITH_JOIN_EXISTS",
+			sql:  `SELECT wrap_value((SELECT r.value FROM sample_rows r JOIN related_rows x ON EXISTS (SELECT 1 FROM allowed_rows a WHERE a.value = x.value)))`,
+			want: `
+SELECT
+  wrap_value((
+    SELECT
+      r.value
+    FROM sample_rows r
+      INNER JOIN related_rows x
+        ON EXISTS(
+          SELECT
+            1
+          FROM allowed_rows a
+          WHERE a.value = x.value
+        )
+  ))
+`,
+		},
+		{
 			name: "COALESCE_ARRAY_LENGTH",
 			sql:  `select coalesce(array_length(u.user_uuids, 1),0) as result_count from users u`,
 			want: `
@@ -755,6 +894,40 @@ WHERE user_uuid = $1
 `,
 		},
 		{
+			name: "delete with negated any condition",
+			sql: `delete from sample_records
+where group_uuid = $1
+  and not (
+    record_uuid = any($2::uuid[])
+  )`,
+			want: `
+DELETE FROM sample_records
+WHERE group_uuid = $1
+  AND (
+    NOT (record_uuid = ANY($2::uuid[]))
+  )
+`,
+		},
+		{
+			name: "delete with negated boolean expression",
+			sql:  `delete from sample_records where not (state = $1 or state = $2)`,
+			want: `
+DELETE FROM sample_records
+WHERE NOT (
+    state = $1
+      OR state = $2
+  )
+`,
+		},
+		{
+			name: "delete with negated null test",
+			sql:  `delete from sample_records where not (archived_at is null)`,
+			want: `
+DELETE FROM sample_records
+WHERE NOT (archived_at IS NULL)
+`,
+		},
+		{
 			name: "delete: current_setting",
 			sql:  `delete from users where locale = current_setting('locale')`,
 			want: `
@@ -1091,6 +1264,46 @@ WHERE g.gather_uuid = ANY($1)
 			if diff := cmp.Diff(tt.want, actual); diff != "" {
 				t.Errorf("diff: %s", diff)
 			}
+		})
+	}
+}
+
+func TestFormatRejectsUnsupportedSubLinkInFuncArg(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		sql     string
+		wantErr string
+	}{
+		{
+			name:    "NOT_IN",
+			sql:     `SELECT wrap_value((SELECT value FROM sample_rows WHERE value NOT IN (SELECT blocked_value FROM blocked_rows)))`,
+			wantErr: "unsupported boolean expression sublink type",
+		},
+		{
+			name:    "IN",
+			sql:     `SELECT wrap_value((SELECT value FROM sample_rows WHERE value IN (SELECT allowed_value FROM allowed_rows)))`,
+			wantErr: "unsupported WHERE clause sublink type",
+		},
+		{
+			name:    "ANY",
+			sql:     `SELECT wrap_value((SELECT value FROM sample_rows WHERE value = ANY (SELECT allowed_value FROM allowed_rows)))`,
+			wantErr: "unsupported WHERE clause sublink type",
+		},
+		{
+			name:    "ALL",
+			sql:     `SELECT wrap_value((SELECT value FROM sample_rows WHERE value <> ALL (SELECT blocked_value FROM blocked_rows)))`,
+			wantErr: "unsupported WHERE clause sublink type",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			_, err := formatter.Format(tt.sql, nil)
+			assert.EqualError(t, err, tt.wantErr)
 		})
 	}
 }

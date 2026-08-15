@@ -363,7 +363,7 @@ func FormatSelectStmtForFuncArg(ctx context.Context, stmt *pg_query.Node_SelectS
 		}
 		bu.WriteString("WHERE ")
 
-		whereRes, err := formatWhereClauseNode(ctx, stmt.SelectStmt.WhereClause, conf)
+		whereRes, err := formatWhereClauseNode(ctx, stmt.SelectStmt.WhereClause, indent, conf)
 		if err != nil {
 			return "", err
 		}
@@ -459,28 +459,41 @@ func FormatSelectStmtForFuncArg(ctx context.Context, stmt *pg_query.Node_SelectS
 }
 
 // formatWhereClauseNode handles various WHERE clause node types
-func formatWhereClauseNode(ctx context.Context, node *pg_query.Node, conf *fmtconf.Config) (string, error) {
+func formatWhereClauseNode(ctx context.Context, node *pg_query.Node, indent int, conf *fmtconf.Config) (string, error) {
 	switch n := node.Node.(type) {
 	case *pg_query.Node_AExpr:
 		return FormatAExpr(ctx, n, conf)
 	case *pg_query.Node_BoolExpr:
-		return formatBoolExprForFunc(ctx, n, 0, conf)
+		return formatBoolExprForFunc(ctx, n, indent, conf)
 	case *pg_query.Node_NullTest:
 		return FormatNullTest(ctx, n)
 	case *pg_query.Node_SubLink:
-		if selectStmt, ok := n.SubLink.Subselect.Node.(*pg_query.Node_SelectStmt); ok {
-			subRes, err := FormatSelectStmtForFuncArg(ctx, selectStmt, 1, conf)
-			if err != nil {
-				return "", err
-			}
-			return fmt.Sprintf("(%s)", subRes), nil
+		selectStmt, ok := n.SubLink.Subselect.Node.(*pg_query.Node_SelectStmt)
+		if !ok {
+			return "", fmt.Errorf("unsupported WHERE clause sublink node type")
 		}
+		if n.SubLink.SubLinkType != pg_query.SubLinkType_EXISTS_SUBLINK {
+			return "", fmt.Errorf("unsupported WHERE clause sublink type")
+		}
+		subRes, err := FormatSelectStmtForFuncArg(ctx, selectStmt, indent+1, conf)
+		if err != nil {
+			return "", err
+		}
+		var bu strings.Builder
+		bu.WriteString("EXISTS(\n")
+		bu.WriteString(subRes)
+		bu.WriteString("\n")
+		for i := 0; i < indent; i++ {
+			bu.WriteString(internal.GetIndent(conf))
+		}
+		bu.WriteString(")")
+		return bu.String(), nil
 	}
 	return "", fmt.Errorf("unsupported WHERE clause node type")
 }
 
 // formatBoolExprForFunc handles BoolExpr nodes specifically for function arguments
-func formatBoolExprForFunc(ctx context.Context, be *pg_query.Node_BoolExpr, indent int, conf *fmtconf.Config) (string, error) {
+func formatBoolExprForFunc(ctx context.Context, be *pg_query.Node_BoolExpr, subqueryIndent int, conf *fmtconf.Config) (string, error) {
 	var bu strings.Builder
 
 	for argI, arg := range be.BoolExpr.Args {
@@ -503,11 +516,20 @@ func formatBoolExprForFunc(ctx context.Context, be *pg_query.Node_BoolExpr, inde
 			if err != nil {
 				return "", err
 			}
+			if be.BoolExpr.Boolop == pg_query.BoolExprType_NOT_EXPR {
+				bu.WriteString("NOT (")
+				bu.WriteString(res)
+				bu.WriteString(")")
+				continue
+			}
 			bu.WriteString(res)
 		case *pg_query.Node_BoolExpr:
-			res, err := formatBoolExprForFunc(ctx, n, indent+1, conf)
+			res, err := formatBoolExprForFunc(ctx, n, subqueryIndent, conf)
 			if err != nil {
 				return "", err
+			}
+			if be.BoolExpr.Boolop == pg_query.BoolExprType_NOT_EXPR {
+				bu.WriteString("NOT ")
 			}
 			bu.WriteString("(")
 			bu.WriteString(res)
@@ -517,7 +539,50 @@ func formatBoolExprForFunc(ctx context.Context, be *pg_query.Node_BoolExpr, inde
 			if err != nil {
 				return "", err
 			}
+			if be.BoolExpr.Boolop == pg_query.BoolExprType_NOT_EXPR {
+				bu.WriteString("NOT (")
+				bu.WriteString(res)
+				bu.WriteString(")")
+				continue
+			}
 			bu.WriteString(res)
+		case *pg_query.Node_ColumnRef:
+			res, err := FormatColumnRefFields(ctx, n)
+			if err != nil {
+				return "", err
+			}
+			if be.BoolExpr.Boolop == pg_query.BoolExprType_NOT_EXPR {
+				bu.WriteString("NOT (")
+				bu.WriteString(res)
+				bu.WriteString(")")
+				continue
+			}
+			bu.WriteString(res)
+		case *pg_query.Node_SubLink:
+			selectStmt, ok := n.SubLink.Subselect.Node.(*pg_query.Node_SelectStmt)
+			if !ok {
+				return "", fmt.Errorf("unsupported sublink node type")
+			}
+			if n.SubLink.SubLinkType != pg_query.SubLinkType_EXISTS_SUBLINK {
+				return "", fmt.Errorf("unsupported boolean expression sublink type")
+			}
+			res, err := FormatSelectStmtForFuncArg(ctx, selectStmt, subqueryIndent+1, conf)
+			if err != nil {
+				return "", err
+			}
+			if be.BoolExpr.Boolop == pg_query.BoolExprType_NOT_EXPR {
+				bu.WriteString("NOT ")
+			}
+			bu.WriteString("EXISTS")
+			bu.WriteString("(\n")
+			bu.WriteString(res)
+			bu.WriteString("\n")
+			for i := 0; i < subqueryIndent; i++ {
+				bu.WriteString(internal.GetIndent(conf))
+			}
+			bu.WriteString(")")
+		default:
+			return "", fmt.Errorf("unsupported boolean expression node type")
 		}
 	}
 
@@ -635,7 +700,7 @@ func formatJoinExprForFunc(ctx context.Context, join *pg_query.Node_JoinExpr, in
 		}
 		bu.WriteString("ON ")
 
-		qualRes, err := formatWhereClauseNode(ctx, join.JoinExpr.Quals, conf)
+		qualRes, err := formatWhereClauseNode(ctx, join.JoinExpr.Quals, indent+2, conf)
 		if err != nil {
 			return "", err
 		}
